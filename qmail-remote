@@ -50,28 +50,30 @@ config file structure
 </dkimsign>
 =cut
 
-my $configfile = undef;
-$configfile    = '/var/qmail/control/dkim/signconf.xml';
-my $debugfile  = undef;
-#$debugfile    = '/tmp/dkim.debug';
-my $qremote    = '/var/qmail/bin/qmail-remote.orig';
-my $binary     = 0;
+
+use Chj::xtmpfile;
+
+my $configfile= '/var/qmail/control/dkim/signconf.xml';
+my $maybe_debugfh= xtmpfile "/tmp/qmail-dkim_";
+my $qremote= '/var/qmail/bin/qmail-remote.orig';
+my $binary= 0;
+
 our $config;
-$config->{'global'} = {
-  types     => { dkim => {} },
-  keyfile   => '/var/qmail/control/dkim/global.key',
-  algorithm => 'rsa-sha256',
-  method    => 'simple',
-  selector  => 'beta',
-  # either string or file (first line of file will be used)
-  domain    => '/var/qmail/control/me'
+
+$config->{'global'} = +{
+    types     => { dkim => {} },
+    keyfile   => '/var/qmail/control/dkim/global.key',
+    algorithm => 'rsa-sha256',
+    method    => 'simple',
+    selector  => 'beta',
+    # either string or file (first line of file will be used)
+    domain    => '/var/qmail/control/me'
 };
 
 #-------------------------------------------------------------------------------
 
 # read config file. safely
-if (defined($configfile) && -r $configfile)
-{
+if (defined $configfile and -r $configfile) {
   eval 'use XML::Simple';
   if (!$@)
   {
@@ -83,14 +85,6 @@ if (defined($configfile) && -r $configfile)
   }
 }
 
-# open debug file
-my $debugfh = undef;
-if (defined($debugfile))
-{
-  open($debugfh, '>', $debugfile)
-    or qexit_deferral('Unable to open ', $debugfile, ' to writing: ', $!);
-}
-
 # generate signatures
 my $dkim;
 my $mailbuf = '';
@@ -99,7 +93,7 @@ eval
   my $conf = $config->{'global'};
   $dkim =  Mail::DKIM::Signer->new(
     Policy => 'MySignerPolicy',
-    Debug_Canonicalization => $debugfh
+    Debug_Canonicalization => $maybe_debugfh
   );
 
   if ($binary)
@@ -122,9 +116,8 @@ eval
 qexit_deferral('Error while signing: ', $@)
   if ($@);
 
-# close debug file
-close($debugfh)
-  if (defined($debugfh));
+$maybe_debugfh->xclose
+    if defined $maybe_debugfh;
 
 # execute qmail-remote
 unshift(@ARGV, $qremote);
