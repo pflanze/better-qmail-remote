@@ -1,0 +1,7 @@
+<dkimsign>
+  <!-- per default sign all mails using dkim -->
+  <global algorithm="rsa-sha1" domain="/var/qmail/control/me" keyfile="/var/qmail/control/dkim/global.key" method="simple" selector="dkim1">
+    <types id="dkim" />
+  </global>
+
+</dkimsign>
