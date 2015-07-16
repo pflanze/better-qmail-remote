@@ -48,9 +48,8 @@ sub config { shift->{config} }
 
 sub apply {
     my ($self, $signer) = @_;
-    my $domain = undef;
-    $domain = lc($signer->message_sender->host)
-	if (defined($signer->message_sender));
+    my $host= $signer->message_sender->host;
+    my $domain = $host && lc $host;
 
     # merge configs
     while ($domain) {
