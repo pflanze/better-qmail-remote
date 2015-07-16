@@ -86,17 +86,26 @@ sub apply {
     for my $type (keys(%{$conf->{'types'}})) {
 	my $sigconf = $conf->{'types'}->{$type};
 
+	my $get= sub {
+	    my ($key)=@_;
+	    $sigconf->{$key} || $conf->{$key}
+	};
+	my $getm= sub {
+	    my ($key)=@_;
+	    &$get($key) || $signer->$key
+	};
+
 	if ($type eq 'dkim') {
 	    $signer->add_signature(
 		new Mail::DKIM::Signature(
-		    Algorithm  => $sigconf->{'algorithm'}  || $conf->{'algorithm'} || $signer->algorithm,
-		    Method     => $sigconf->{'method'}     || $conf->{'method'}    || $signer->method,
-		    Headers    => $sigconf->{'headers'}    || $conf->{'headers'}   || $signer->headers,
-		    Domain     => $sigconf->{'domain'}     || $conf->{'domain'}    || $signer->domain,
-		    Selector   => $sigconf->{'selector'}   || $conf->{'selector'}  || $signer->selector,
-		    Query      => $sigconf->{'query'}      || $conf->{'query'},
-		    Identity   => $sigconf->{'identity'}   || $conf->{'identity'},
-		    Expiration => $sigconf->{'expiration'} || $conf->{'expiration'}
+		    Algorithm  => &$getm('algorithm'),
+		    Method     => &$getm('method'),
+		    Headers    => &$getm('headers'),
+		    Domain     => &$getm('domain'),
+		    Selector   => &$getm('selector'),
+		    Query      => &$get('query'),
+		    Identity   => &$get('identity'),
+		    Expiration => &$get('expiration'),
 		)
 		);
 	    $sigdone = 1;
@@ -105,11 +114,11 @@ sub apply {
 	    $signer->add_signature(
 		new Mail::DKIM::DkSignature(
 		    Algorithm  => 'rsa-sha1', # only rsa-sha1 supported
-		    Method     => $sigconf->{'method'}   || $conf->{'method'}   || $signer->method,
-		    Headers    => $sigconf->{'selector'} || $conf->{'headers'}  || $signer->headers,
-		    Domain     => $sigconf->{'domain'}   || $conf->{'domain'}   || $signer->domain,
-		    Selector   => $sigconf->{'selector'} || $conf->{'selector'} || $signer->selector,
-		    Query      => $sigconf->{'query'}    || $conf->{'query'}
+		    Method     => &$getm('method'),
+		    Headers    => &$getm('selector'),
+		    Domain     => &$getm('domain'),
+		    Selector   => &$getm('selector'),
+		    Query      => &$get('query')
 		)
 		);
 	    $sigdone = 1;
