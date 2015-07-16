@@ -119,14 +119,16 @@ $maybe_debugfh->xclose
 unshift(@ARGV, $qremote);
 open(QR, '|-') || exec { $ARGV[0] } @ARGV
   or qexit_deferral('Unable to run qmail-remote: ', $!);
+
 foreach my $dkim_signature ($dkim->signatures)
 {
   my $sig = $dkim_signature->as_string;
   $sig =~ s/\015\012\t/\012\t/g;
-  print QR $sig."\012";
+  print QR $sig."\012"
+    or qexit_deferral ('Printing to qmail-remote: ', $!);
 }
-print QR $mailbuf;
-close(QR);
+print QR $mailbuf or qexit_deferral ('Printing to qmail-remote: ', $!);
+close(QR) or qexit_deferral ('Sending to qmail-remote: ', $!);
 
 #-------------------------------------------------------------------------------
 
