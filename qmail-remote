@@ -36,6 +36,7 @@ my $debug=1;
 use Mail::DKIM 0.29;
 use Mail::DKIM::Signer;
 use MySignerPolicy;
+use ConfigMerge qw(config_merge);
 
 # enable support for "pretty" signatures, if available
 eval 'require Mail::DKIM::TextWrap';
@@ -74,7 +75,7 @@ if (defined $configfile and -r $configfile) {
 	} || do {
 	    qexit_deferral('Unable to read config file: ', $@)
 	};
-	ConfigMerge::merge($config, $xmlconf);
+	config_merge($config, $xmlconf);
     };
 }
 
@@ -148,36 +149,4 @@ sub qexit_success
 {
   return qexit('K', @_);
 }
-
-#-------------------------------------------------------------------------------
-
-package ConfigMerge;
-
-# merge config hashes. arrays and scalars will be copied.
-sub merge
-{
-  my ($left, $right) = @_;
-  foreach my $rkey (keys(%$right))
-  {
-    my $rtype = ref($right->{$rkey}) eq 'HASH' ? 'HASH'
-              : ref($right->{$rkey}) eq 'ARRAY' ? 'ARRAY'
-              : defined($right->{$rkey}) ? 'SCALAR'
-              : '';
-    my $ltype = ref($left->{$rkey}) eq 'HASH' ? 'HASH'
-              : ref($left->{$rkey}) eq 'ARRAY' ? 'ARRAY'
-              : defined($left->{$rkey}) ? 'SCALAR'
-              : '';
-    if ($rtype ne 'HASH' || $ltype ne 'HASH')
-    {
-      $left->{$rkey} = $right->{$rkey};
-    }
-    else
-    {
-      merge($left->{$rkey}, $right->{$rkey});
-    }
-  }
-  return;
-}
-
-#-------------------------------------------------------------------------------
 
