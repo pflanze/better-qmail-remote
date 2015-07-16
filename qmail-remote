@@ -37,6 +37,7 @@ use Mail::DKIM 0.29;
 use Mail::DKIM::Signer;
 use MySignerPolicy;
 use ConfigMerge qw(config_merge);
+use QmailExit ":all";
 
 # enable support for "pretty" signatures, if available
 eval 'require Mail::DKIM::TextWrap';
@@ -128,25 +129,4 @@ print QR $mailbuf;
 close(QR);
 
 #-------------------------------------------------------------------------------
-
-sub qexit
-{
-  print @_, "\0";
-  exit(0);
-}
-
-sub qexit_deferral
-{
-  return qexit('Z', @_);
-}
-
-sub qexit_failure
-{
-  return qexit('D', @_);
-}
-
-sub qexit_success
-{
-  return qexit('K', @_);
-}
 
