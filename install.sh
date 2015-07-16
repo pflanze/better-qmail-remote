@@ -57,7 +57,7 @@ read LETSGO
 qmailctl stop
 sleep 5
 mv /var/qmail/bin/qmail-remote /var/qmail/bin/qmail-remote.orig
-mv $INSTALL_DIR/qmail-remote /var/qmail/bin/
+ln -s $INSTALL_DIR/qmail-remote /var/qmail/bin/
 
 # Set permissions on the qmail-remote wrapper
 #chmod 777 /var/qmail/bin/qmail-remote
