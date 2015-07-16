@@ -31,7 +31,6 @@ QmailExit
 package QmailExit;
 @ISA="Exporter"; require Exporter;
 @EXPORT=qw(
-	      qexit
 	      qexit_deferral
 	      qexit_failure
 	      qexit_success
