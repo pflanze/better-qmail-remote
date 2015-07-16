@@ -27,7 +27,10 @@ perl -pi -e 's/global.key._domainkey/dkim1/' /var/qmail/control/dkim/public.txt
 mv $INSTALL_DIR/signconf.xml /var/qmail/control/dkim/
 
 # Set permissions on DKIM key files
-chown -R qmailr:qmail /var/qmail/control/dkim
+#chown -R qmailr:qmail /var/qmail/control/dkim
+#huh giving write access? rather:
+chmod -R g+r /var/qmail/control/dkim
+chgrp -R qmail /var/qmail/control/dkim
 
 # Warn you and give you the correct DNS entry to sign messages
 echo
@@ -57,7 +60,10 @@ mv /var/qmail/bin/qmail-remote /var/qmail/bin/qmail-remote.orig
 mv $INSTALL_DIR/qmail-remote /var/qmail/bin/
 
 # Set permissions on the qmail-remote wrapper
-chmod 777 /var/qmail/bin/qmail-remote
+#chmod 777 /var/qmail/bin/qmail-remote
+# again, definitively NO. NOT at all.
+chmod +x /var/qmail/bin/qmail-remote
+
 chown root:qmail /var/qmail/bin/qmail-remote
 
 qmailctl start
