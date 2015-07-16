@@ -55,18 +55,16 @@ $config->{'global'} = +{
 
 # read config file. safely
 if (defined $configfile and -r $configfile) {
-  eval 'use XML::Simple';
-  if (!$@)
-  {
-    my $xmlconf;
-    eval {
-	$xmlconf = XMLin($configfile, ForceArray => ['types'], KeyAttr => ['id']);
-	1
-    } || do {
-	qexit_deferral('Unable to read config file: ', $@)
+    eval 'use XML::Simple; 1' and do {
+	my $xmlconf;
+	eval {
+	    $xmlconf = XMLin($configfile, ForceArray => ['types'], KeyAttr => ['id']);
+	    1
+	} || do {
+	    qexit_deferral('Unable to read config file: ', $@)
+	};
+	ConfigMerge::merge($config, $xmlconf);
     };
-    ConfigMerge::merge($config, $xmlconf);
-  }
 }
 
 # generate signatures
@@ -96,9 +94,10 @@ eval
     $dkim->PRINT($_);
   }
   $dkim->CLOSE();
+  1
+} || do {
+    qexit_deferral('Error while signing: ', $@)
 };
-qexit_deferral('Error while signing: ', $@)
-  if ($@);
 
 $maybe_debugfh->xclose
     if defined $maybe_debugfh;
