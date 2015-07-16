@@ -59,9 +59,12 @@ if (defined $configfile and -r $configfile) {
   if (!$@)
   {
     my $xmlconf;
-    eval { $xmlconf = XMLin($configfile, ForceArray => ['types'], KeyAttr => ['id']); };
-    qexit_deferral('Unable to read config file: ', $@)
-      if ($@);
+    eval {
+	$xmlconf = XMLin($configfile, ForceArray => ['types'], KeyAttr => ['id']);
+	1
+    } || do {
+	qexit_deferral('Unable to read config file: ', $@)
+    };
     ConfigMerge::merge($config, $xmlconf);
   }
 }
