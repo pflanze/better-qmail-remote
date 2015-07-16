@@ -39,8 +39,8 @@ use Carp;
 use ConfigMerge qw(config_merge);
 
 sub new {
-    my ($class,$args)=@_;
-    bless $args, $class
+    my ($class,$config)=@_;
+    bless {config=> $config}, $class
 }
 
 sub config { shift->{config} }
