@@ -30,7 +30,7 @@ eval 'require Mail::DKIM::TextWrap';
 use Chj::xtmpfile;
 
 my $configfile= '/var/qmail/control/dkim/signconf.xml';
-my $maybe_debugfh= xtmpfile "/tmp/qmail-dkim_";
+my $maybe_debugfh= xtmpfile "/tmp/qmail-dkim_"; $maybe_debugfh->autoclean(0);
 my $qremote= '/var/qmail/bin/qmail-remote.orig';
 my $binary= 0;
 
