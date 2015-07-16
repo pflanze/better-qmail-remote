@@ -59,7 +59,7 @@ $config->{'global'} = +{
     keyfile   => '/var/qmail/control/dkim/global.key',
     algorithm => 'rsa-sha256',
     method    => 'simple',
-    selector  => 'beta',
+    selector  => 'global',
     # either string or file (first line of file will be used)
     domain    => '/var/qmail/control/me'
 };
