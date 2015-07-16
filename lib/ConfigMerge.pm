@@ -37,29 +37,24 @@ package ConfigMerge;
 use strict; use warnings FATAL => 'uninitialized';
 
 # merge config hashes. arrays and scalars will be copied.
-sub config_merge
-{
-  my ($left, $right) = @_;
-  foreach my $rkey (keys(%$right))
-  {
-    my $rtype = ref($right->{$rkey}) eq 'HASH' ? 'HASH'
-              : ref($right->{$rkey}) eq 'ARRAY' ? 'ARRAY'
-              : defined($right->{$rkey}) ? 'SCALAR'
-              : '';
-    my $ltype = ref($left->{$rkey}) eq 'HASH' ? 'HASH'
-              : ref($left->{$rkey}) eq 'ARRAY' ? 'ARRAY'
-              : defined($left->{$rkey}) ? 'SCALAR'
-              : '';
-    if ($rtype ne 'HASH' || $ltype ne 'HASH')
-    {
-      $left->{$rkey} = $right->{$rkey};
+sub config_merge {
+    my ($left, $right) = @_;
+    for my $rkey (keys(%$right)) {
+	my $rtype = ref($right->{$rkey}) eq 'HASH' ? 'HASH'
+	    : ref($right->{$rkey}) eq 'ARRAY' ? 'ARRAY'
+	    : defined($right->{$rkey}) ? 'SCALAR'
+	    : '';
+	my $ltype = ref($left->{$rkey}) eq 'HASH' ? 'HASH'
+	    : ref($left->{$rkey}) eq 'ARRAY' ? 'ARRAY'
+	    : defined($left->{$rkey}) ? 'SCALAR'
+	    : '';
+	if ($rtype ne 'HASH' || $ltype ne 'HASH') {
+	    $left->{$rkey} = $right->{$rkey};
+	} else {
+	    config_merge($left->{$rkey}, $right->{$rkey});
+	}
     }
-    else
-    {
-      config_merge($left->{$rkey}, $right->{$rkey});
-    }
-  }
-  return;
+    return;
 }
 
 

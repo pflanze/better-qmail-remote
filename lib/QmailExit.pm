@@ -40,25 +40,21 @@ package QmailExit;
 
 use strict; use warnings FATAL => 'uninitialized';
 
-sub qexit
-{
-  print @_, "\0";
-  exit(0);
+sub qexit {
+    print @_, "\0";
+    exit(0);
 }
 
-sub qexit_deferral
-{
-  return qexit('Z', @_);
+sub qexit_deferral {
+    return qexit('Z', @_);
 }
 
-sub qexit_failure
-{
-  return qexit('D', @_);
+sub qexit_failure {
+    return qexit('D', @_);
 }
 
-sub qexit_success
-{
-  return qexit('K', @_);
+sub qexit_success {
+    return qexit('K', @_);
 }
 
 1

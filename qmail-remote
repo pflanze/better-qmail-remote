@@ -71,7 +71,9 @@ if (defined $configfile and -r $configfile) {
     eval 'use XML::Simple; 1' and do {
 	my $xmlconf;
 	eval {
-	    $xmlconf = XMLin($configfile, ForceArray => ['types'], KeyAttr => ['id']);
+	    $xmlconf = XMLin($configfile,
+			     ForceArray => ['types'],
+			     KeyAttr => ['id']);
 	    1
 	} || do {
 	    qexit_deferral('Unable to read config file: ', $@)
@@ -83,31 +85,31 @@ if (defined $configfile and -r $configfile) {
 # generate signatures
 my $dkim;
 my $mailbuf = '';
-eval
-{
-  my $conf = $config->{'global'};
-  $dkim =  Mail::DKIM::Signer->new(
-    Policy => MySignerPolicy->new($config),
-    Debug_Canonicalization => $maybe_debugfh
-  );
 
-  if ($binary)
-  {
-    binmode STDIN;
-  }
+eval {
+    my $conf = $config->{'global'};
+    $dkim =
+	Mail::DKIM::Signer->new(
+	    Policy => MySignerPolicy->new($config),
+	    Debug_Canonicalization => $maybe_debugfh
+	);
 
-  while (<STDIN>)
-  {
-    $mailbuf .= $_;
-    unless ($binary)
-    {
-      chomp $_;
-      s/\015?$/\015\012/s;
+    if ($binary) {
+	binmode STDIN;
     }
-    $dkim->PRINT($_);
-  }
-  $dkim->CLOSE();
-  1
+
+    while (<STDIN>) {
+	$mailbuf .= $_;
+	unless ($binary)
+	{
+	    chomp $_;
+	    s/\015?$/\015\012/s;
+	}
+	$dkim->PRINT($_);
+    }
+    $dkim->CLOSE();
+
+    1
 } || do {
     qexit_deferral('Error while signing: ', $@)
 };
@@ -118,17 +120,16 @@ $maybe_debugfh->xclose
 # execute qmail-remote
 unshift(@ARGV, $qremote);
 open(QR, '|-') || exec { $ARGV[0] } @ARGV
-  or qexit_deferral('Unable to run qmail-remote: ', $!);
+    or qexit_deferral('Unable to run qmail-remote: ', $!);
 
-foreach my $dkim_signature ($dkim->signatures)
-{
-  my $sig = $dkim_signature->as_string;
-  $sig =~ s/\015\012\t/\012\t/g;
-  print QR $sig."\012"
-    or qexit_deferral ('Printing to qmail-remote: ', $!);
+for my $dkim_signature ($dkim->signatures) {
+    my $sig = $dkim_signature->as_string;
+    $sig =~ s/\015\012\t/\012\t/g;
+    print QR $sig."\012"
+	or qexit_deferral ('Printing to qmail-remote: ', $!);
 }
-print QR $mailbuf or qexit_deferral ('Printing to qmail-remote: ', $!);
-close(QR) or qexit_deferral ('Sending to qmail-remote: ', $!);
 
-#-------------------------------------------------------------------------------
+print QR $mailbuf or qexit_deferral ('Printing to qmail-remote: ', $!);
+
+close(QR) or qexit_deferral ('Sending to qmail-remote: ', $!);
 

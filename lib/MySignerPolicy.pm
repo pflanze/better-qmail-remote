@@ -46,84 +46,77 @@ sub new {
 sub config { shift->{config} }
 
 
-sub apply
-{
-  my ($self, $signer) = @_;
-  my $domain = undef;
-  $domain = lc($signer->message_sender->host)
-    if (defined($signer->message_sender));
+sub apply {
+    my ($self, $signer) = @_;
+    my $domain = undef;
+    $domain = lc($signer->message_sender->host)
+	if (defined($signer->message_sender));
 
-  # merge configs
-  while($domain)
-  {
-    if (defined($self->config->{$domain}))
-    {
-      $self->config->{'global'}->{'types'} = undef;
-      ConfigMerge::merge($self->config->{'global'}, $self->config->{$domain});
-      last;
+    # merge configs
+    while ($domain) {
+	if (defined($self->config->{$domain})) {
+	    $self->config->{'global'}->{'types'} = undef;
+	    ConfigMerge::merge($self->config->{'global'}, $self->config->{$domain});
+	    last;
+	}
+	(undef, $domain) = split(/\./, $domain, 2);
     }
-    (undef, $domain) = split(/\./, $domain, 2);
-  }
 
-  my $conf = $self->config->{'global'};
-  return 0
-    if (!defined($conf->{'types'}) || defined($conf->{'types'}->{'none'}));
+    my $conf = $self->config->{'global'};
+    return 0
+	if (!defined($conf->{'types'}) || defined($conf->{'types'}->{'none'}));
 
-  # set key file
-  $signer->key_file($conf->{'keyfile'});
+    # set key file
+    $signer->key_file($conf->{'keyfile'});
 
-  # parse (signature) domain
-  if (substr($conf->{'domain'}, 0, 1) eq '/')
-  {
-    open(FH, '<', $conf->{'domain'})
-      or croak('Unable to open domain-file: '.$!);
-    my $newdom = (split(/ /, <FH>))[0];
-    close(FH);
-    croak("Unable to read domain-file. Maybe empty file.")
-      if (!$newdom);
-    chomp($newdom);
-    $conf->{'domain'} = $newdom;
-  }
-
-  # generate signatures
-  my $sigdone = 0;
-  foreach my $type (keys(%{$conf->{'types'}}))
-  {
-    my $sigconf = $conf->{'types'}->{$type};
-
-    if ($type eq 'dkim')
-    {
-      $signer->add_signature(
-        new Mail::DKIM::Signature(
-          Algorithm  => $sigconf->{'algorithm'}  || $conf->{'algorithm'} || $signer->algorithm,
-          Method     => $sigconf->{'method'}     || $conf->{'method'}    || $signer->method,
-          Headers    => $sigconf->{'headers'}    || $conf->{'headers'}   || $signer->headers,
-          Domain     => $sigconf->{'domain'}     || $conf->{'domain'}    || $signer->domain,
-          Selector   => $sigconf->{'selector'}   || $conf->{'selector'}  || $signer->selector,
-          Query      => $sigconf->{'query'}      || $conf->{'query'},
-          Identity   => $sigconf->{'identity'}   || $conf->{'identity'},
-          Expiration => $sigconf->{'expiration'} || $conf->{'expiration'}
-        )
-      );
-      $sigdone = 1;
+    # parse (signature) domain
+    if (substr($conf->{'domain'}, 0, 1) eq '/') {
+	open(FH, '<', $conf->{'domain'})
+	    or croak('Unable to open domain-file: '.$!);
+	my $newdom = (split(/ /, <FH>))[0];
+	close(FH);
+	croak("Unable to read domain-file. Maybe empty file.")
+	    if (!$newdom);
+	chomp($newdom);
+	$conf->{'domain'} = $newdom;
     }
-    elsif ($type eq 'domainkey')
-    {
-      $signer->add_signature(
-        new Mail::DKIM::DkSignature(
-          Algorithm  => 'rsa-sha1', # only rsa-sha1 supported
-          Method     => $sigconf->{'method'}   || $conf->{'method'}   || $signer->method,
-          Headers    => $sigconf->{'selector'} || $conf->{'headers'}  || $signer->headers,
-          Domain     => $sigconf->{'domain'}   || $conf->{'domain'}   || $signer->domain,
-          Selector   => $sigconf->{'selector'} || $conf->{'selector'} || $signer->selector,
-          Query      => $sigconf->{'query'}    || $conf->{'query'}
-        )
-      );
-      $sigdone = 1;
-    }
-  }
 
-  return $sigdone;
+    # generate signatures
+    my $sigdone = 0;
+    for my $type (keys(%{$conf->{'types'}})) {
+	my $sigconf = $conf->{'types'}->{$type};
+
+	if ($type eq 'dkim') {
+	    $signer->add_signature(
+		new Mail::DKIM::Signature(
+		    Algorithm  => $sigconf->{'algorithm'}  || $conf->{'algorithm'} || $signer->algorithm,
+		    Method     => $sigconf->{'method'}     || $conf->{'method'}    || $signer->method,
+		    Headers    => $sigconf->{'headers'}    || $conf->{'headers'}   || $signer->headers,
+		    Domain     => $sigconf->{'domain'}     || $conf->{'domain'}    || $signer->domain,
+		    Selector   => $sigconf->{'selector'}   || $conf->{'selector'}  || $signer->selector,
+		    Query      => $sigconf->{'query'}      || $conf->{'query'},
+		    Identity   => $sigconf->{'identity'}   || $conf->{'identity'},
+		    Expiration => $sigconf->{'expiration'} || $conf->{'expiration'}
+		)
+		);
+	    $sigdone = 1;
+	}
+	elsif ($type eq 'domainkey') {
+	    $signer->add_signature(
+		new Mail::DKIM::DkSignature(
+		    Algorithm  => 'rsa-sha1', # only rsa-sha1 supported
+		    Method     => $sigconf->{'method'}   || $conf->{'method'}   || $signer->method,
+		    Headers    => $sigconf->{'selector'} || $conf->{'headers'}  || $signer->headers,
+		    Domain     => $sigconf->{'domain'}   || $conf->{'domain'}   || $signer->domain,
+		    Selector   => $sigconf->{'selector'} || $conf->{'selector'} || $signer->selector,
+		    Query      => $sigconf->{'query'}    || $conf->{'query'}
+		)
+		);
+	    $sigdone = 1;
+	}
+    }
+
+    return $sigdone;
 }
 
 
