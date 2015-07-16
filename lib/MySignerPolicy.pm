@@ -33,12 +33,18 @@ package MySignerPolicy;
 use strict; use warnings FATAL => 'uninitialized';
 
 use Mail::DKIM::SignerPolicy;
-use base 'Mail::DKIM::SignerPolicy';
 use Mail::DKIM::Signature;
 use Mail::DKIM::DkSignature;
 use Carp;
-use strict;
-use warnings;
+use ConfigMerge qw(config_merge);
+
+sub new {
+    my ($class,$args)=@_;
+    bless $args, $class
+}
+
+sub config { shift->{config} }
+
 
 sub apply
 {
@@ -50,16 +56,16 @@ sub apply
   # merge configs
   while($domain)
   {
-    if (defined($config->{$domain}))
+    if (defined($self->config->{$domain}))
     {
-      $config->{'global'}->{'types'} = undef;
-      ConfigMerge::merge($config->{'global'}, $config->{$domain});
+      $self->config->{'global'}->{'types'} = undef;
+      ConfigMerge::merge($self->config->{'global'}, $self->config->{$domain});
       last;
     }
     (undef, $domain) = split(/\./, $domain, 2);
   }
 
-  my $conf = $config->{'global'};
+  my $conf = $self->config->{'global'};
   return 0
     if (!defined($conf->{'types'}) || defined($conf->{'types'}->{'none'}));
 
