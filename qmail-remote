@@ -39,6 +39,7 @@ use Mail::DKIM::Signer;
 use MySignerPolicy;
 use ConfigMerge qw(config_merge);
 use QmailExit ":all";
+use HashCash qw(have_hashcash mint_hashcash);
 
 # enable support for "pretty" signatures, if available
 eval 'require Mail::DKIM::TextWrap';
@@ -118,10 +119,22 @@ eval {
 $maybe_debugfh->xclose
     if defined $maybe_debugfh;
 
+
+my ($host, $sender, @recip)= @ARGV;
+
 # execute qmail-remote
 unshift(@ARGV, $qremote);
 open(QR, '|-') || exec { $ARGV[0] } @ARGV
     or qexit_deferral('Unable to run qmail-remote: ', $!);
+
+if (have_hashcash) { # XX add configuration option (instead)?
+    my $bits= 23; # XX configuration option, too.
+    for my $recip (@recip) {
+	my $c= mint_hashcash $bits, $recip;
+	print QR $c, "\012"
+	  or qexit_deferral ('Printing to qmail-remote: ', $!);
+    }
+}
 
 for my $dkim_signature ($dkim->signatures) {
     my $sig = $dkim_signature->as_string;
