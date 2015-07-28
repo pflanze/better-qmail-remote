@@ -46,7 +46,7 @@ sub have_hashcash {
 sub mint_hashcash {
     @_==2 or die "wrong number of arguments";
     my ($bits, $str)=@_;
-    my $in= Chj::IO::Command->new_sender("hashcash", "-b", $bits, "-m", $str);
+    my $in= Chj::IO::Command->new_sender("hashcash", "-b", $bits, "-X", "-m", $str);
     my $res= $in->xcontent;
     $in->xxfinish;
     chomp $res;
