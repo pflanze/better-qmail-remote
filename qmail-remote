@@ -130,9 +130,12 @@ open(QR, '|-') || exec { $ARGV[0] } @ARGV
 if (have_hashcash) { # XX add configuration option (instead)?
     my $bits= 23; # XX configuration option, too.
     for my $recip (@recip) {
-	my $c= mint_hashcash $bits, $recip;
-	print QR $c, "\012"
-	  or qexit_deferral ('Printing to qmail-remote: ', $!);
+	eval {
+	    my $c= mint_hashcash $bits, $recip;
+	    print QR $c, "\012"
+	      or qexit_deferral ('Printing to qmail-remote: ', $!);
+	    1
+	} or qlog "$@";
     }
 }
 

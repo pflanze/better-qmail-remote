@@ -34,6 +34,7 @@ package QmailExit;
 	      qexit_deferral
 	      qexit_failure
 	      qexit_success
+	      qlog
 	 );
 @EXPORT_OK=qw();
 %EXPORT_TAGS=(all=>[@EXPORT,@EXPORT_OK]);
@@ -55,6 +56,14 @@ sub qexit_failure {
 
 sub qexit_success {
     return qexit('K', @_);
+}
+
+# XX don't know whether this is correct.
+sub qlog {
+    my $msg= join(" ", @_);
+    chomp $msg;
+    $msg=~ s/\n/\n /sg;
+    print STDERR " $msg\n";
 }
 
 1
