@@ -51,8 +51,6 @@ sub mint_hashcash {
     my $in= Chj::IO::Command->new_sender("hashcash", "-b", $bits, "-X", "-m", $str);
     my $res= $in->xcontent;
     $in->xxfinish;
-    chomp $res;
-    $res=~ /\n/ and die "bug: multi-line answer";
     $res
 }
 

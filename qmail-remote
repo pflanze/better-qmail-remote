@@ -132,7 +132,7 @@ if (have_hashcash) { # XX add configuration option (instead)?
     for my $recip (@recip) {
 	eval {
 	    my $c= mint_hashcash $bits, $recip;
-	    print QR $c, "\012"
+	    print QR $c
 	      or qexit_deferral ('Printing to qmail-remote: ', $!);
 	    1
 	} or qlog "$@";
