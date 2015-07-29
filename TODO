@@ -1,2 +1,7 @@
-* BCC probably revealed in X-hashcash headers if sending to multiple
-  users at same domain
+* verify when qmail-remote is called with multiple recipients, to
+  prevent problems:
+
+   - revealing of BCC in X-hashcash headers
+
+   - perhaps somehow leading to double spend of tokens
+
