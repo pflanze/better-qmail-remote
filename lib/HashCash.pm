@@ -48,7 +48,8 @@ sub mint_hashcash {
     my ($bits, $str)=@_;
     die "address contains invalid characters"
       if $str=~ /[\n\r\t:]/s;
-    my $in= Chj::IO::Command->new_sender("hashcash", "-b", $bits, "-X", "-m", $str);
+    my $in= Chj::IO::Command->new_sender("hashcash", "-b", $bits, "-X", "-Z", "2",
+					 "-m", $str);
     my $res= $in->xcontent;
     $in->xxfinish;
     $res
