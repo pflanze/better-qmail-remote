@@ -40,6 +40,8 @@ use MySignerPolicy;
 use ConfigMerge qw(config_merge);
 use QmailExit ":all";
 use HashCash qw(have_hashcash mint_hashcash);
+use Spamscore ":all";
+use DeliverMaildir 'deliver_wholemail_maildir';
 
 # enable support for "pretty" signatures, if available
 eval 'require Mail::DKIM::TextWrap';
@@ -116,8 +118,59 @@ eval {
     qexit_deferral('Error while signing: ', $@)
 };
 
+
 $maybe_debugfh->xclose
     if defined $maybe_debugfh;
+
+
+# Check whether we really want to deliver this message: if it
+# has a high spam score, don't.  Although, if those are locally
+# generated messages, *iff* they ever get an SA score, then the
+# refusal should be in the smtpd [or imapd] part, not here. What we
+# really just want is, stop delivery of *bounces* of high-spamscore
+# emails.
+
+# Can't do this earlier since we had to read $mailbuf first.
+
+sub stopit {
+    # deliver to 'emergency' local account instead.
+    my $maildir= '/var/qmail/Maildir_spambounce';
+    deliver_wholemail_maildir $mailbuf, $maildir;
+    qexit_success;
+}
+
+eval {
+    if (my ($to_whom,$return_and_orig)= perhaps_wholemail_doublebounce $mailbuf) {
+	warn "not sure how comes that we're trying to send a doublebounce";
+	# should be impossible, qmail doesn't send double bounces
+    } elsif (my ($return,$orig)= perhaps_wholemail_bounce $mailbuf) {
+	if (my ($spamscore)= perhaps_wholemail_spamscore $orig) {
+	    # likely spam to a non-existing address.
+	    if ($spamscore > 3) {
+		stopit;
+	    }
+	} else {
+	    # original part is missing the spamscore (odd?, but), go
+	    # on delivering it
+	}
+    } else {
+	# not a bounce. still check spamscore, even though it should
+	# never have one in the current setup, just to be sure...
+	if (my ($spamscore)= perhaps_wholemail_spamscore $mailbuf) {
+	    if ($spamscore > 5) {
+		stopit;
+	    }
+	} else {
+	    # no problem, deliver it
+	}
+    }
+    1
+} || do {
+    #qexit_deferral('Error while checking: ', $@)
+    # Printing to STDERR is ok, only STDOUT is used for signaling back, right?
+    print STDERR "ignoring exception during spam check: $@";
+};
+
 
 
 my ($host, $sender, @recip)= @ARGV;
@@ -150,3 +203,5 @@ print QR $mailbuf or qexit_deferral ('Printing to qmail-remote: ', $!);
 
 close(QR) or qexit_deferral ('Sending to qmail-remote: ', $!);
 
+# why is qexit_success never called? Because the piped-to qmail-remote
+# issues it.
