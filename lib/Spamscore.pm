@@ -24,14 +24,16 @@ package Spamscore;
 	   perhaps_wholemail_bounce
 	   perhaps_wholemail_spamscore_bounce
 	 );
-@EXPORT_OK=qw(testread);
+@EXPORT_OK=qw(xcontentref);
 %EXPORT_TAGS=(all=>[@EXPORT,@EXPORT_OK]);
 
-sub testread {
+sub xcontentref {
     my ($path)=@_;
-    #use Chj::xopen 'xopen_read';
     require Chj::xopen; import Chj::xopen 'xopen_read';
-    xopen_read ($path)->xcontent
+    my $in= xopen_read ($path);
+    my $res= $in->xcontentref;
+    $in->xclose;
+    $res
 }
 
 my $NL= qr/(?:\015?\012)/;
