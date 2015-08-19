@@ -146,7 +146,7 @@ eval {
     } elsif (my ($return,$orig)= perhaps_wholemail_bounce $mailbuf) {
 	if (my ($spamscore)= perhaps_wholemail_spamscore $orig) {
 	    # likely spam to a non-existing address.
-	    if ($spamscore > 3) {
+	    if ($spamscore >= 2.5) {
 		stopit;
 	    }
 	} else {
