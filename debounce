@@ -51,7 +51,7 @@ sub debounce {
 			or die "??";
 	my $rf= xcontentref $path;
 	if (my ($return, $orig)= perhaps_wholemail_bounce $$rf) {
-	    deliver_wholemail_maildir $orig, $maildir;
+	    deliver_wholemail_maildir $orig, $maildir, $path;
 	    deliver_file_maildir $path, $maildir_orig;
 	} else {
 	    die "not a bounce??(ah, allowing for that actually): $path"
