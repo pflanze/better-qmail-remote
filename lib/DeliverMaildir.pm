@@ -49,7 +49,7 @@ sub deliver_wholemail_maildir ($$) {
 	for my $i (0..10) {
 	    # XX is int ok? necessary?
 	    my $filename= genfilename $hn, $i;
-	    warn "trying $filename";##
+	    #warn "trying $filename";##
 	    my $path= $maildir."/tmp/".$filename;
 	    my $out;
 	    if (eval {
@@ -64,7 +64,7 @@ sub deliver_wholemail_maildir ($$) {
 		    for my $i (0..10) {
 			# XX is int ok? necessary?
 			my $filename= genfilename $hn, $i;
-			warn "trying $filename";##
+			#warn "trying $filename";##
 			my $path2= $maildir."/new/".$filename;
 			if (eval {
 			    xlinkunlink ($path, $path2);
