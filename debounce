@@ -1,0 +1,69 @@
+#!/usr/bin/perl
+#
+# Copyright (C) 2015 Christian Jaeger (ch at christianjaeger ch)
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either
+# version 2 of the License, or (at your option) any later
+# version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software Foundation,
+# Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+
+use strict; use warnings; use warnings FATAL => 'uninitialized';
+
+# find modules
+use Cwd 'abs_path';
+our ($mydir, $myname); BEGIN {
+    my $location= (-l $0) ? abs_path ($0) : $0;
+    $location=~ /(.*?)([^\/]+?)_?\z/s or die "?";
+    ($mydir, $myname)=($1,$2);
+}
+use lib "$mydir/lib";
+
+@ARGV==0 or die "$0: no arguments needed. Interactively asks";
+
+use Chj::Util::AskChoose 'askchoose_autonum_withcanceldef';
+use Spamscore qw(xcontentref perhaps_wholemail_bounce);
+use DeliverMaildir qw(deliver_wholemail_maildir deliver_file_maildir);
+
+my $maildir_in= '/var/qmail/Maildir_spambounce';
+my $maildir_orig= '/var/qmail/Maildir_spambounce/.orig';
+my $maildir_spam= '/var/qmail/Maildir_spambounce/.Spam';
+my $maildir_ham= '/var/qmail/Maildir_spambounce/.Ham';
+
+sub debounce {
+    my ($path)=@_;
+    system "less", $path;
+    if (my $ans= askchoose_autonum_withcanceldef ["c", "(c)ancel"], "spam", "ham") {
+	my $maildir= +{
+		       spam=> $maildir_spam,
+		       ham=> $maildir_ham
+		      }->{$ans}
+			or die "??";
+	my $rf= xcontentref $path;
+	if (my ($return, $orig)= perhaps_wholemail_bounce $$rf) {
+	    deliver_wholemail_maildir $orig, $maildir;
+	    deliver_file_maildir $path, $maildir_orig;
+	} else {
+	    die "not a bounce??(ah, allowing for that actually): $path"
+	}
+    } else {
+	die "cancelled by user.\n";
+    }
+}
+
+use FP::IOStream qw(xopendir_pathstream);
+
+for (qw(new cur tmp)) {
+    xopendir_pathstream("$maildir_in/$_")->for_each (*debounce);
+}
+
