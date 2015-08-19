@@ -17,7 +17,7 @@ DeliverMaildir
 
 package DeliverMaildir;
 @ISA="Exporter"; require Exporter;
-@EXPORT=qw(deliver_wholemail_maildir);
+@EXPORT=qw(deliver_wholemail_maildir deliver_file_maildir);
 @EXPORT_OK=qw(hostname genfilename);
 %EXPORT_TAGS=(all=>[@EXPORT,@EXPORT_OK]);
 
@@ -37,62 +37,68 @@ sub hostname {
 sub genfilename {
     my ($hn, $i)=@_;
     # 1439893504.18412.servi:2,S
+    # XX is int ok? necessary?
     int(time).".".$$.($i ? "_$i" : "").".".$hn
 }
 
-sub deliver_wholemail_maildir ($$) {
-    #my $wholemail= $_[0];
-    my $maildir= $_[1];
+# (adapted COPY from deliver_wholemail_maildir)
+sub deliver_file_maildir ($$;$) {
+    my ($path, $maildir, $maybe_hn)=@_;
+    my $hn= $maybe_hn // hostname;
 
-    my $hn= hostname;
-  TRY: {
-	for my $i (0..10) {
-	    # XX is int ok? necessary?
-	    my $filename= genfilename $hn, $i;
-	    #warn "trying $filename";##
-	    my $path= $maildir."/tmp/".$filename;
-	    my $out;
-	    if (eval {
-		$out= xsysopen_excl ($path);
-		1
-	    }) {
-		$out->xprint($_[0]);
-		$out->xclose;
+    my $filename= basename ($path);
 
-		# oh wow: now do the same circus again!!!!
-	      TRY2: {
-		    for my $i (0..10) {
-			# XX is int ok? necessary?
-			my $filename= genfilename $hn, $i;
-			#warn "trying $filename";##
-			my $path2= $maildir."/new/".$filename;
-			if (eval {
-			    xlinkunlink ($path, $path2);
-			    1
-			}) {
-			    return $path2
-			    #last TRY2;
-			} else {
-			    if ($! == EEXIST) {
-				# redo
-			    } else {
-				die $@
-			    }
-			}
-		    }
-		    die "could not deliver mail, ran out of attempts finding a free filename";
-		}
-		#last TRY;
+    for my $i (0..10) {
+	#warn "trying $filename";##
+	my $path2= $maildir."/new/".$filename;
+	if (eval {
+	    xlinkunlink ($path, $path2);
+	    1
+	}) {
+	    return $path2
+	} else {
+	    if ($! == EEXIST) {
+		$filename= genfilename $hn, $i;
+		# redo
 	    } else {
-		if ($! == EEXIST) {
-		    # redo
-		} else {
-		    die $@
-		}
+		die $@
 	    }
 	}
-	die "could not deliver mail, ran out of attempts finding a free filename";
     }
+    die "could not deliver mail (move file), ran out of attempts finding a free filename";
+}
+
+sub deliver_wholemail_maildir ($$;$) {
+    #my $wholemail= $_[0]; # string
+    my $maildir= $_[1];
+    my $maybe_origpath= $_[1];
+
+    my $hn= hostname;
+    my $filename= $maybe_origpath ? basename ($maybe_origpath)
+      : genfilename $hn, 0;
+
+    for my $i (0..100) {
+	#warn "trying $filename";##
+	my $path= $maildir."/tmp/".$filename;
+	my $out;
+	if (eval {
+	    $out= xsysopen_excl ($path);
+	    1
+	}) {
+	    $out->xprint($_[0]);
+	    $out->xclose;
+
+	    return deliver_file_maildir $path, $maildir;
+	} else {
+	    if ($! == EEXIST) {
+		$filename= genfilename $hn, $i;
+		# redo
+	    } else {
+		die $@
+	    }
+	}
+    }
+    die "could not deliver mail (write string to disk), ran out of attempts finding a free filename";
 }
 
 1
