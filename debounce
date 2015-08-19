@@ -43,7 +43,7 @@ my $maildir_ham= '/var/qmail/Maildir_spambounce/.Ham';
 sub debounce {
     my ($path)=@_;
     system "less", $path;
-    if (my $ans= askchoose_autonum_withcanceldef ["c", "(c)ancel"], "spam", "ham") {
+    if (my $ans= askchoose_autonum_withcanceldef ["s", "(s)kip"], "spam", "ham") {
 	my $maildir= +{
 		       spam=> $maildir_spam,
 		       ham=> $maildir_ham
@@ -57,7 +57,7 @@ sub debounce {
 	    die "not a bounce??(ah, allowing for that actually): $path"
 	}
     } else {
-	die "cancelled by user.\n";
+	warn "skipped path '$path'\n";
     }
 }
 
