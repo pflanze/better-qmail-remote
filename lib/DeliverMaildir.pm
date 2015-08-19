@@ -48,7 +48,7 @@ sub deliver_file_maildir ($$;$) {
 
     my $filename= basename ($path);
 
-    for my $i (0..10) {
+    for my $i (0..100) {
 	#warn "trying $filename";##
 	my $path2= $maildir."/new/".$filename;
 	if (eval {
@@ -71,7 +71,7 @@ sub deliver_file_maildir ($$;$) {
 sub deliver_wholemail_maildir ($$;$) {
     #my $wholemail= $_[0]; # string
     my $maildir= $_[1];
-    my $maybe_origpath= $_[1];
+    my $maybe_origpath= $_[2];
 
     my $hn= hostname;
     my $filename= $maybe_origpath ? basename ($maybe_origpath)
