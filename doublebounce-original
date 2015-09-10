@@ -1,0 +1,60 @@
+#!/usr/bin/perl
+#
+# Copyright (C) 2015 Christian Jaeger (ch at christianjaeger ch)
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either
+# version 2 of the License, or (at your option) any later
+# version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software Foundation,
+# Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+
+use strict; use warnings; use warnings FATAL => 'uninitialized';
+
+# find modules
+use Cwd 'abs_path';
+our ($mydir, $myname); BEGIN {
+    my $location= (-l $0) ? abs_path ($0) : $0;
+    $location=~ /(.*?)([^\/]+?)_?\z/s or die "?";
+    ($mydir, $myname)=($1,$2);
+}
+use lib "$mydir/lib";
+
+@ARGV==1 or @ARGV==2
+  or die "usage: $0 inpath [outpath]
+  strip bounce header from mail at inpath. print to outpath or STDOUT.\n";
+
+my ($inpath, $maybe_outpath)=@ARGV;
+
+use Spamscore qw(xcontentref perhaps_wholemail_bounce);
+use Chj::xtmpfile;
+
+sub bounce_original {
+    my ($inpath)=@_;
+    my $rf= xcontentref $inpath;
+    if (my ($return, $orig)= perhaps_wholemail_bounce $$rf) {
+	$orig
+    } else {
+	die "not a bounce: '$inpath'"
+    }
+}
+
+my $mail= bounce_original $inpath;
+if (defined $maybe_outpath) {
+    my $t = xtmpfile $maybe_outpath;
+    $t->xprint ($mail);
+    $t->xclose;
+    $t->xputback(0600);
+} else {
+    print STDOUT $mail
+      or die "stdout: $!";
+}
