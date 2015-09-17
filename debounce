@@ -34,11 +34,30 @@ use lib "$mydir/lib";
 use Chj::Util::AskChoose 'askchoose_autonum_withcanceldef';
 use Spamscore qw(xcontentref perhaps_wholemail_bounce);
 use DeliverMaildir qw(deliver_wholemail_maildir deliver_file_maildir);
+use Chj::singlequote qw(singlequote_sh);
+use FP::PureArray;
 
 my $maildir_in= '/var/qmail/Maildir_spambounce';
 my $maildir_orig= '/var/qmail/Maildir_spambounce/.orig';
 my $maildir_spam= '/var/qmail/Maildir_spambounce/.Spam';
 my $maildir_ham= '/var/qmail/Maildir_spambounce/.Ham';
+sub dirs_sh {
+    purearray($maildir_in, $maildir_orig, $maildir_spam, $maildir_ham,
+	      map {"$maildir_in/$_"} qw(new cur tmp))
+      ->map(*singlequote_sh)->strings_join(" ")
+}
+
+$> or die "$0: don't run me as root.
+
+Note: the user you're going to use will need access to some
+directories: run (once those have been created by qmail-remote):
+
+ chgrp \"\$accessiblegroup\" ".dirs_sh."
+ chmod g+rwx ".dirs_sh."
+
+";
+
+
 
 sub debounce {
     my ($path)=@_;
