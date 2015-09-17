@@ -35,48 +35,82 @@ use Chj::Util::AskChoose 'askchoose_autonum_withcanceldef';
 use Spamscore qw(xcontentref perhaps_wholemail_bounce);
 use DeliverMaildir qw(deliver_wholemail_maildir deliver_file_maildir);
 use Chj::singlequote qw(singlequote_sh);
-use FP::PureArray;
+use Chj::xperlfunc;
+
+#XX lib
+sub possibly_singlequote_sh ($) {
+    my ($str)=@_;
+    if ($str=~ m{^[\w/.-]+\z}) {
+	$str
+    } else {
+	singlequote_sh $str
+    }
+}
+
+sub singlequote_sh_many {
+    join " ", map { possibly_singlequote_sh $_ } @_
+}
+#/lib
+
 
 my $maildir_in= '/var/qmail/Maildir_spambounce';
 my $maildir_orig= '/var/qmail/Maildir_spambounce/.orig';
 my $maildir_spam= '/var/qmail/Maildir_spambounce/.Spam';
 my $maildir_ham= '/var/qmail/Maildir_spambounce/.Ham';
+
+sub maildirdirs ($) {
+    my ($path)=@_;
+    ($path, map {"$path/$_"} qw(new cur tmp))
+}
+sub dirs {
+    (maildirdirs $maildir_in,
+     maildirdirs $maildir_orig,
+     maildirdirs $maildir_spam,
+     maildirdirs $maildir_ham)
+}
 sub dirs_sh {
-    purearray($maildir_in, $maildir_orig, $maildir_spam, $maildir_ham,
-	      map {"$maildir_in/$_"} qw(new cur tmp))
-      ->map(*singlequote_sh)->strings_join(" ")
+    singlequote_sh_many dirs
 }
 
-$> or die "$0: don't run me as root.
+$> or do {
+    mkdir $_, 0700 for dirs;
+    die "$0: don't run me as root.
 
 Note: the user you're going to use will need access to some
-directories: run (once those have been created by qmail-remote):
+directories. Run:
 
  chgrp \"\$accessiblegroup\" ".dirs_sh."
  chmod g+rwx ".dirs_sh."
 
 ";
+};
 
 
 
 sub debounce {
     my ($path)=@_;
-    system "less", $path;
-    if (my $ans= askchoose_autonum_withcanceldef ["s", "(s)kip"], "spam", "ham") {
-	my $maildir= +{
-		       spam=> $maildir_spam,
-		       ham=> $maildir_ham
-		      }->{$ans}
-			or die "??";
-	my $rf= xcontentref $path;
-	if (my ($return, $orig)= perhaps_wholemail_bounce $$rf) {
-	    deliver_wholemail_maildir $orig, $maildir, $path;
+    my $rf= xcontentref $path;
+    if (my ($return, $orig)= perhaps_wholemail_bounce $$rf) {
+	system "less", $path;
+	if (my $ans= askchoose_autonum_withcanceldef ["s", "(s)kip"], "spam", "ham") {
+	    my $maildir= +{
+			   spam=> $maildir_spam,
+			   ham=> $maildir_ham
+			  }->{$ans}
+			    or die "??";
+	    my $deliveredextract_path=
+	      deliver_wholemail_maildir $orig, $maildir, $path;
 	    deliver_file_maildir $path, $maildir_orig;
+	    # use 'spam' / 'ham' also directly as the name of the tool
+	    # for learning:
+	    my @cmd=($ans, $deliveredextract_path);
+	    warn "Running: ".singlequote_sh_many(@cmd);
+	    xxsystem @cmd;
 	} else {
-	    die "not a bounce??(ah, allowing for that actually): $path"
+	    warn "skipped path '$path'\n";
 	}
     } else {
-	warn "skipped path '$path'\n";
+	die "not a bounce??(ah, allowing for that actually): $path"
     }
 }
 
