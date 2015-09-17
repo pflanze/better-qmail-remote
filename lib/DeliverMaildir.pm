@@ -31,7 +31,8 @@ use POSIX 'EEXIST';
 sub hostname {
     my $hn= xopen_read("/proc/sys/kernel/hostname")->xcontent;
     chomp $hn;
-    $hn
+    $hn=~ m{^(\w+)\z} or die "invalid hostname? '$hn'";
+    $1
 }
 
 sub genfilename {
