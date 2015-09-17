@@ -29,8 +29,15 @@ our ($mydir, $myname); BEGIN {
 }
 use lib "$mydir/lib";
 
+use detaint;
+
+# Do this early so that repl calls in libs can run subprograms:
+BEGIN { $ENV{PATH} = detaint $ENV{PATH} }
+
+
 @ARGV==0 or die "$0: no arguments needed. Interactively asks";
 
+use Chj::Backtrace;
 use Chj::Util::AskChoose 'askchoose_autonum_withcanceldef';
 use Spamscore qw(xcontentref perhaps_wholemail_bounce);
 use DeliverMaildir qw(deliver_wholemail_maildir deliver_file_maildir);
@@ -50,6 +57,7 @@ sub possibly_singlequote_sh ($) {
 sub singlequote_sh_many {
     join " ", map { possibly_singlequote_sh $_ } @_
 }
+
 #/lib
 
 
@@ -66,7 +74,8 @@ sub dirs {
     (maildirdirs $maildir_in,
      maildirdirs $maildir_orig,
      maildirdirs $maildir_spam,
-     maildirdirs $maildir_ham)
+     maildirdirs $maildir_ham,
+     "/var/run/chj-dkim")
 }
 sub dirs_sh {
     singlequote_sh_many dirs
@@ -91,16 +100,16 @@ sub debounce {
     my ($path)=@_;
     my $rf= xcontentref $path;
     if (my ($return, $orig)= perhaps_wholemail_bounce $$rf) {
-	system "less", $path;
+	system "less", detaint $path;
 	if (my $ans= askchoose_autonum_withcanceldef ["s", "(s)kip"], "spam", "ham") {
 	    my $maildir= +{
 			   spam=> $maildir_spam,
 			   ham=> $maildir_ham
-			  }->{$ans}
+			  }->{detaint $ans}
 			    or die "??";
 	    my $deliveredextract_path=
-	      deliver_wholemail_maildir $orig, $maildir, $path;
-	    deliver_file_maildir $path, $maildir_orig;
+	      deliver_wholemail_maildir detaint $orig, $maildir, detaint $path;
+	    deliver_file_maildir detaint $path, $maildir_orig;
 	    # use 'spam' / 'ham' also directly as the name of the tool
 	    # for learning:
 	    my @cmd=($ans, $deliveredextract_path);
@@ -115,6 +124,11 @@ sub debounce {
 }
 
 use FP::IOStream qw(xopendir_pathstream);
+
+xxsystem "$mydir/_debounce-enable";
+use Time::HiRes 'sleep'; sleep 0.3;
+# XXX soooo hacky. need erlang style messaging instead man, more
+# precisely, continuation (return).
 
 for (qw(new cur tmp)) {
     xopendir_pathstream("$maildir_in/$_")->for_each (*debounce);

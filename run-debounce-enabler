@@ -1,0 +1,7 @@
+#!/bin/bash
+
+set -euo pipefail
+IFS=
+
+trigger-listen --umask 0 /var/run/chj-dkim/sock /opt/chj/dkim/_debounce-enabler
+
