@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -T
 #
 # Copyright (C) 2015 Christian Jaeger (ch at christianjaeger ch)
 #
