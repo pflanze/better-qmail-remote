@@ -3,5 +3,11 @@
 set -euo pipefail
 IFS=
 
+private mkdir /var/run/chj-dkim/ && {
+    # XXX gah, abstraction leak. /var/run is cleaned after reboots. BAH
+    chgrp chrismail /var/run/chj-dkim/
+    chmod g+rwx /var/run/chj-dkim/
+}
+
 trigger-listen --umask 0 /var/run/chj-dkim/sock /opt/chj/dkim/_debounce-enabler
 
