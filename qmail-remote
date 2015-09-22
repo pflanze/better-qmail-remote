@@ -52,6 +52,7 @@ use QmailExit ":all";
 use HashCash qw(have_hashcash mint_hashcash);
 use Spamscore ":all";
 use DeliverMaildir 'deliver_wholemail_maildir';
+use FP::untainted qw(untainted);
 
 # enable support for "pretty" signatures, if available
 eval 'require Mail::DKIM::TextWrap';
@@ -186,9 +187,8 @@ eval {
 my ($host, $sender, @recip)= @ARGV;
 
 # execute qmail-remote
-unshift(@ARGV, $qremote);
-open(QR, '|-') || exec { $ARGV[0] } @ARGV
-    or qexit_deferral('Unable to run qmail-remote: ', $!);
+open(QR, '|-') || exec ($qremote, map { untainted ($_) } @ARGV)
+  or qexit_deferral('Unable to run qmail-remote: ', $!);
 
 if (have_hashcash) { # XX add configuration option (instead)?
     my $bits= 23; # XX configuration option, too.
