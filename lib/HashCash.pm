@@ -45,9 +45,9 @@ sub have_hashcash {
 
 sub mint_hashcash {
     @_==2 or die "wrong number of arguments";
-    my ($bits, $str)=@_;
-    die "address contains invalid characters"
-      if $str=~ /[\n\r\t:]/s;
+    my ($bits, $addr)=@_;
+    my ($str)= $addr=~ /^([a-zA-Z.,:;+#~^=_@%*&0-9-])+\z/s # XXX: probably too lenient and too strict
+      or die "address is empty or contains invalid characters";
     my $in= Chj::IO::Command->new_sender("hashcash", "-b", $bits, "-X", "-Z", "2",
 					 "-m", $str);
     my $res= $in->xcontent;
