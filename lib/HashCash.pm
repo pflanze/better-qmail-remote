@@ -55,7 +55,5 @@ sub mint_hashcash {
     $res
 }
 
-#use Chj::repl;repl;
-
 
 1
