@@ -126,7 +126,7 @@ sub debounce {
 use FP::IOStream qw(xopendir_pathstream);
 
 xxsystem "$mydir/_debounce-enable";
-use Time::HiRes 'sleep'; sleep 0.3;
+use Time::HiRes 'sleep'; sleep 0.8;
 # XXX soooo hacky. need erlang style messaging instead man, more
 # precisely, continuation (return).
 
