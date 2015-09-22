@@ -30,6 +30,16 @@ our ($mydir, $myname); BEGIN {
 }
 use lib "$mydir/lib";
 
+# use safe PATH setting:  XX make configurable?
+$ENV{PATH}=
+  join(":",
+       qw(/usr/local/sbin
+	  /usr/local/bin
+	  /usr/sbin
+	  /usr/bin
+	  /sbin
+	  /bin));
+
 our $VERSION = '0.2';
 
 my $debug=1;
