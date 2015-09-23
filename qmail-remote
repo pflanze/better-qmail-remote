@@ -42,7 +42,7 @@ $ENV{PATH}=
 
 our $VERSION = '0.2';
 
-my $debug=1;
+my $debug=0;
 
 use Mail::DKIM 0.29;
 use Mail::DKIM::Signer;
