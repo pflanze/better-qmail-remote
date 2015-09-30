@@ -27,6 +27,8 @@ our ($mydir, $myname); BEGIN {
     $location=~ /(.*?)([^\/]+?)_?\z/s or die "?";
     ($mydir, $myname)=($1,$2);
 }
+use lib "$mydir/chj-perllib";
+use lib "$mydir/functional-perl/lib";
 use lib "$mydir/lib";
 
 use detaint;
