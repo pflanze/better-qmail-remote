@@ -84,7 +84,7 @@ sub debounce {
 
 use FP::IOStream qw(xopendir_pathstream);
 
-for (qw(new cur tmp)) {
+for (qw(new cur)) { # do not check tmp, as that's for ongoing deliveries
     xopendir_pathstream("$maildir_in/$_")->for_each (*debounce);
 }
 
