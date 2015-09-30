@@ -63,10 +63,7 @@ sub singlequote_sh_many {
 #/lib
 
 
-my $maildir_in= '/var/qmail/Maildir_spambounce';
-my $maildir_orig= '/var/qmail/Maildir_spambounce/.orig';
-my $maildir_spam= '/var/qmail/Maildir_spambounce/.Spam';
-my $maildir_ham= '/var/qmail/Maildir_spambounce/.Ham';
+use Spambounce_config ":maildir_path_vars";
 
 sub maildirdirs ($) {
     my ($path)=@_;

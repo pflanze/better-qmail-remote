@@ -55,6 +55,7 @@ use HashCash qw(have_hashcash mint_hashcash);
 use Spamscore ":all";
 use DeliverMaildir 'deliver_wholemail_maildir';
 use FP::untainted qw(untainted);
+use Spambounce_config qw(maildir_spambounce_path);
 
 # enable support for "pretty" signatures, if available
 eval 'require Mail::DKIM::TextWrap';
@@ -147,7 +148,7 @@ $maybe_debugfh->xclose
 
 sub stopit {
     # deliver to 'emergency' local account instead.
-    my $maildir= '/var/qmail/Maildir_spambounce';
+    my $maildir= maildir_spambounce_path;
     deliver_wholemail_maildir $mailbuf, $maildir, undef, 0644;
     qexit_success;
 }
