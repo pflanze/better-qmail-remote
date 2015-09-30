@@ -44,31 +44,59 @@ use Chj::Util::AskChoose 'askchoose_autonum_withcanceldef';
 use Spamscore qw(xcontentref perhaps_wholemail_bounce);
 use DeliverMaildir qw(deliver_wholemail_maildir deliver_file_maildir);
 use Chj::singlequote qw(singlequote_sh_many);
-use Chj::xperlfunc;
+use Chj::xperlfunc ":all";
+use Chj::xtmpfile;
 
 
 use Spambounce_config ":maildir_path_vars";
 
 $> or die "$0: don't run me as root.\n";
 
+sub adapt_path_orig ($$) {
+    my ($path,$addon)=@_;
+    # it looks like: 1442228746.9242.servi
+    $path=~ s|(/\d{8,11}\.\d+)(\.)|${1}_orig$addon$2|
+      or die "match failure for path: '$path'";
+    $path
+}
+
+sub xadapt_path_orig ($) {
+    my ($path)=@_;
+    my $p;
+    for (my $i=0; $i<100; $i++) {
+	$p= adapt_path_orig ($path, $i||"");
+	if (not -e $p) {
+	    return $p
+	}
+    }
+    die "could not find a free path like '$p'";
+}
+
 
 sub debounce {
     my ($path)=@_;
     my $rf= xcontentref $path;
     if (my ($return, $orig)= perhaps_wholemail_bounce $$rf) {
-	system "less", detaint $path;
+	# don't overwrite the original file!:
+	my $tmp= xtmpfile xadapt_path_orig "$maildir_in/tmp/".detaint (basename($path));
+	$tmp->xprint ($orig);
+	$tmp->xclose;
+	$tmp->xputback (0644);
+	system "less", detaint $tmp->path;
 	if (my $ans= askchoose_autonum_withcanceldef ["s", "(s)kip"], "spam", "ham") {
 	    my $maildir= +{
 			   spam=> $maildir_spam,
 			   ham=> $maildir_ham
 			  }->{detaint $ans}
 			    or die "??";
+
+	    # deliver the extracted part:
 	    my $deliveredextract_path=
-	      deliver_wholemail_maildir (detaint $orig,
-					 $maildir,
-					 detaint $path,
-					 0644);
+	      deliver_file_maildir ($tmp->path,
+				    $maildir);
+	    # deliver the full, unextracted mail:
 	    deliver_file_maildir detaint $path, $maildir_orig;
+
 	    # use 'spam' / 'ham' also directly as the name of the tool
 	    # for learning:
 	    my @cmd=($ans, $deliveredextract_path);
