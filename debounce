@@ -43,24 +43,8 @@ use Chj::Backtrace;
 use Chj::Util::AskChoose 'askchoose_autonum_withcanceldef';
 use Spamscore qw(xcontentref perhaps_wholemail_bounce);
 use DeliverMaildir qw(deliver_wholemail_maildir deliver_file_maildir);
-use Chj::singlequote qw(singlequote_sh);
+use Chj::singlequote qw(singlequote_sh_many);
 use Chj::xperlfunc;
-
-#XX lib
-sub possibly_singlequote_sh ($) {
-    my ($str)=@_;
-    if ($str=~ m{^[\w/.-]+\z}) {
-	$str
-    } else {
-	singlequote_sh $str
-    }
-}
-
-sub singlequote_sh_many {
-    join " ", map { possibly_singlequote_sh $_ } @_
-}
-
-#/lib
 
 
 use Spambounce_config ":maildir_path_vars";
