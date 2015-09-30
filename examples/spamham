@@ -1,0 +1,17 @@
+#!/bin/bash
+
+set -euo pipefail
+IFS=
+
+spamham="$1"
+shift
+
+echo "Learning as $spamham:"
+
+for f in "$@"; do 
+    echo -n "$f: "
+    # adapt the socket path here:
+    cat "$f" | spamc --socket ~spamd/spamd/socket -s 2500000 -L "$spamham"
+done
+
+echo Ok.
