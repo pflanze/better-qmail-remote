@@ -69,10 +69,11 @@ sub deliver_file_maildir ($$;$) {
     die "could not deliver mail (move file), ran out of attempts finding a free filename";
 }
 
-sub deliver_wholemail_maildir ($$;$) {
+sub deliver_wholemail_maildir ($$;$$) {
     #my $wholemail= $_[0]; # string
     my $maildir= $_[1];
     my $maybe_origpath= $_[2];
+    my $maybe_perms= $_[3];
 
     my $hn= hostname;
     my $filename= $maybe_origpath ? basename ($maybe_origpath)
@@ -88,6 +89,8 @@ sub deliver_wholemail_maildir ($$;$) {
 	}) {
 	    $out->xprint($_[0]);
 	    $out->xclose;
+	    xchmod $maybe_perms, $path
+	      if defined $maybe_perms;
 
 	    return deliver_file_maildir $path, $maildir;
 	} else {

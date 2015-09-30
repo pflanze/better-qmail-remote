@@ -146,7 +146,7 @@ $maybe_debugfh->xclose
 sub stopit {
     # deliver to 'emergency' local account instead.
     my $maildir= '/var/qmail/Maildir_spambounce';
-    deliver_wholemail_maildir $mailbuf, $maildir;
+    deliver_wholemail_maildir $mailbuf, $maildir, undef, 0644;
     qexit_success;
 }
 

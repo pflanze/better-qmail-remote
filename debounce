@@ -108,7 +108,10 @@ sub debounce {
 			  }->{detaint $ans}
 			    or die "??";
 	    my $deliveredextract_path=
-	      deliver_wholemail_maildir detaint $orig, $maildir, detaint $path;
+	      deliver_wholemail_maildir (detaint $orig,
+					 $maildir,
+					 detaint $path,
+					 0644);
 	    deliver_file_maildir detaint $path, $maildir_orig;
 	    # use 'spam' / 'ham' also directly as the name of the tool
 	    # for learning:
