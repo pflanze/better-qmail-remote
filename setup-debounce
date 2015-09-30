@@ -1,0 +1,80 @@
+#!/usr/bin/perl -T
+#
+# Copyright (C) 2015 Christian Jaeger (ch at christianjaeger ch)
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either
+# version 2 of the License, or (at your option) any later
+# version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software Foundation,
+# Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+
+use strict; use warnings; use warnings FATAL => 'uninitialized';
+
+# find modules
+use Cwd 'abs_path';
+our ($mydir, $myname); BEGIN {
+    my $location= (-l $0) ? abs_path ($0) : $0;
+    $location=~ /(.*?)([^\/]+?)_?\z/s or die "?";
+    ($mydir, $myname)=($1,$2);
+}
+use lib "$mydir/chj-perllib";
+use lib "$mydir/functional-perl/lib";
+use lib "$mydir/lib";
+
+use detaint;
+use Chj::Backtrace;
+use Chj::singlequote qw(singlequote_sh_many);
+use Chj::xperlfunc ":all";
+use Spambounce_config ":maildir_path_vars";
+
+@ARGV==1 or die "usage: $0 groupname
+
+  'groupname' should be the name of a group that the user who will run
+  the 'debounce' program is part of.
+
+  This group will be given access to the directory
+  ".singlequote_sh_many($maildir_in)."
+";
+
+our ($groupname)= @ARGV;
+
+
+sub maildirdirs ($) {
+    my ($path)=@_;
+    ($path, map {"$path/$_"} qw(new cur tmp))
+}
+sub dirs {
+    (maildirdirs $maildir_in,
+     maildirdirs $maildir_orig,
+     maildirdirs $maildir_spam,
+     maildirdirs $maildir_ham)
+}
+sub dirs_sh {
+    singlequote_sh_many dirs
+}
+
+
+sub do_setup {
+    mkdir $_, 0700 for dirs;
+
+    my $qmailr_user= "qmailr";
+    my $user = xgetpwnam($qmailr_user);
+    my $group= xgetgrnam($groupname);
+
+    xchown detaint($user->uid), detaint($group->gid), $_
+      for dirs;
+    xchmod 0770, $_
+      for dirs;
+}
+
+do_setup;
