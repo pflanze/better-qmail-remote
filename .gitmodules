@@ -1,0 +1,6 @@
+[submodule "chj-perllib"]
+	path = chj-perllib
+	url = https://github.com/pflanze/chj-perllib.git
+[submodule "functional-perl"]
+	path = functional-perl
+	url = https://github.com/pflanze/functional-perl.git
