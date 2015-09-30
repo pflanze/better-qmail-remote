@@ -74,8 +74,7 @@ sub dirs {
     (maildirdirs $maildir_in,
      maildirdirs $maildir_orig,
      maildirdirs $maildir_spam,
-     maildirdirs $maildir_ham,
-     "/var/run/chj-dkim")
+     maildirdirs $maildir_ham)
 }
 sub dirs_sh {
     singlequote_sh_many dirs
@@ -127,11 +126,6 @@ sub debounce {
 }
 
 use FP::IOStream qw(xopendir_pathstream);
-
-xxsystem "$mydir/_debounce-enable";
-use Time::HiRes 'sleep'; sleep 0.8;
-# XXX soooo hacky. need erlang style messaging instead man, more
-# precisely, continuation (return).
 
 for (qw(new cur tmp)) {
     xopendir_pathstream("$maildir_in/$_")->for_each (*debounce);

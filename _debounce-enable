@@ -1,7 +1,0 @@
-#!/bin/bash
-
-set -euo pipefail
-IFS=
-
-trigger-send /var/run/chj-dkim/sock
-
