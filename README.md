@@ -40,7 +40,18 @@ Check out the source code:
     cd /opt
     git clone https://github.com/pflanze/better-qmail-remote.git
     cd better-qmail-remote
-    # get the submodules:
+
+Check out the latest release (unless you want the latest changes and fixes):
+
+    v=`git tag -l | grep '^v' | sort |tail -1`
+    # to check the signature
+    gpg --recv-key 0FA5B21104EDB072
+    git tag -v "$v"
+    # check it out as a branch
+    git checkout -b "$v" "$v"
+
+Get the submodules:
+
     git submodule init && git submodule update
 
 Optional: run the tests in the functional-perl submodule (although the
