@@ -152,3 +152,19 @@ that I don't need it:
           <!-- no signing for example2.com -->
           <example2.com />
         </dkimsign>
+
+
+## Links
+
+Possibly useful links:
+
+* [Qmailwiki](http://www.qmailwiki.org/Main_Page)
+* [Life with qmail](http://www.lifewithqmail.org/lwq.html)
+* [qmail.org](http://www.qmail.org/top.html) (is this not maintained anymore?)
+* [indimail](http://www.indimail.org/) ([discussion group](http://groups.google.com/group/indimail))
+* [fehcom.de](http://www.fehcom.de/qmail/qmail.html), most active current maintainer of Qmail?
+* [eQmail](https://blog.dyndn.es/doku.php?id=blog:2014:10:18_eqmail_1.08)
+
+Mailing lists:
+
+* qmail@list.cr.yp.to, [on gmane](http://news.gmane.org/gmane.mail.qmail.general)
