@@ -82,7 +82,7 @@ sub debounce {
 	$tmp->xprint ($orig);
 	$tmp->xclose;
 	$tmp->xputback (0644);
-	system "less", detaint $tmp->path;
+	xsystem "less", detaint $tmp->path;
 	if (my $ans= askchoose_autonum_withcanceldef ["s", "(s)kip"], "spam", "ham") {
 	    my $maildir= +{
 			   spam=> $maildir_spam,
