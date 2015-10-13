@@ -104,6 +104,8 @@ sub debounce {
 	    xxsystem @cmd;
 	} else {
 	    warn "skipped path '$path'\n";
+	    unlink detaint $tmp->path; # or should it be left around
+                                       # for easy cmdline hacking?
 	}
     } else {
 	die "not a bounce??(ah, allowing for that actually): $path"
