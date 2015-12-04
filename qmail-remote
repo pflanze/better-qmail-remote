@@ -61,7 +61,7 @@ use Spambounce_config qw(maildir_spambounce_path);
 eval 'require Mail::DKIM::TextWrap';
 
 my $configfile= '/var/qmail/control/dkim/signconf.xml';
-my $maybe_debugfh= $debug ? do {
+my $maybe_debugfh= ($ENV{BETTER_QMAIL_REMOTE__DEBUG} || $debug) ? do {
     require Chj::xtmpfile;
     require Chj::singlequote; "Chj::singlequote"->import(qw(singlequote_sh_many));
     my $t= Chj::xtmpfile::xtmpfile ("/tmp/qmail-dkim_");
@@ -72,7 +72,8 @@ my $maybe_debugfh= $debug ? do {
     }
     $t
 } : undef;
-my $qremote= '/var/qmail/bin/qmail-remote.orig';
+my $qremote=
+  $ENV{BETTER_QMAIL_REMOTE__ORIG} // '/var/qmail/bin/qmail-remote.orig';
 my $binary= 0;
 
 our $config;
