@@ -147,6 +147,9 @@ eval {
 };
 
 
+$maybe_debugfh->xflush if $maybe_debugfh;
+
+
 # ----------------------------------------------------------------------
 
 # Backscatter avoidance
