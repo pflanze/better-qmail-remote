@@ -85,7 +85,9 @@ $config->{'global'} = +{
     domain    => '/var/qmail/control/me'
 };
 
-#-------------------------------------------------------------------------------
+# ----------------------------------------------------------------------
+
+# Create DKIM signature
 
 # read config file. safely
 if (defined $configfile and -r $configfile) {
@@ -140,6 +142,10 @@ $maybe_debugfh->xclose
     if defined $maybe_debugfh;
 
 
+# ----------------------------------------------------------------------
+
+# Backscatter avoidance
+
 # Check whether we really want to deliver this message: if it
 # has a high spam score, don't.  Although, if those are locally
 # generated messages, *iff* they ever get an SA score, then the
@@ -189,6 +195,9 @@ eval {
 };
 
 
+# ----------------------------------------------------------------------
+
+# Deliver the message, and add hashcash and the DKIM signature
 
 my ($host, $sender, @recip)= @ARGV;
 
