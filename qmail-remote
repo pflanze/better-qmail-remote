@@ -73,7 +73,9 @@ my $maybe_debugfh= ($ENV{BETTER_QMAIL_REMOTE__DEBUG} || $debug) ? do {
     $t
 } : undef;
 my $qremote=
-  $ENV{BETTER_QMAIL_REMOTE__ORIG} // '/var/qmail/bin/qmail-remote.orig';
+  $ENV{BETTER_QMAIL_REMOTE__ORIG} ?
+  untainted($ENV{BETTER_QMAIL_REMOTE__ORIG}) # XX really trust it?
+  : '/var/qmail/bin/qmail-remote.orig';
 my $binary= 0;
 
 our $config;
