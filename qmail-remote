@@ -65,6 +65,9 @@ my $maybe_debugfh= $debug ? do {
     require Chj::xtmpfile;
     my $t= Chj::xtmpfile::xtmpfile ("/tmp/qmail-dkim_");
     $t->autoclean(0);
+    for (sort keys %ENV) {
+	$t->xprint("$_=$ENV{$_}\n");
+    }
     $t
 } : undef;
 my $qremote= '/var/qmail/bin/qmail-remote.orig';
