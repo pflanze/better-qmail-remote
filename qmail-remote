@@ -72,6 +72,10 @@ my $maybe_debugfh= ($ENV{BETTER_QMAIL_REMOTE__DEBUG} || $debug) ? do {
     }
     $t
 } : undef;
+sub Debug {
+    $maybe_debugfh->xprintln(@_) if $maybe_debugfh;
+}
+
 my $qremote=
   $ENV{BETTER_QMAIL_REMOTE__ORIG} ?
   untainted($ENV{BETTER_QMAIL_REMOTE__ORIG}) # XX really trust it?
@@ -141,10 +145,6 @@ eval {
 } || do {
     qexit_deferral('Error while signing: ', $@)
 };
-
-
-$maybe_debugfh->xclose
-    if defined $maybe_debugfh;
 
 
 # ----------------------------------------------------------------------
@@ -220,6 +220,8 @@ if (have_hashcash) { # XX add configuration option (instead)?
 	    1
 	} or qlog "$@";
     }
+} else {
+    Debug ("don't have hashcash");
 }
 
 for my $dkim_signature ($dkim->signatures) {
@@ -235,3 +237,8 @@ close(QR) or qexit_deferral ('Sending to qmail-remote: ', $!);
 
 # why is qexit_success never called? Because the piped-to qmail-remote
 # issues it.
+
+
+$maybe_debugfh->xclose
+    if defined $maybe_debugfh;
+
