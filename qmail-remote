@@ -63,8 +63,10 @@ eval 'require Mail::DKIM::TextWrap';
 my $configfile= '/var/qmail/control/dkim/signconf.xml';
 my $maybe_debugfh= $debug ? do {
     require Chj::xtmpfile;
+    require Chj::singlequote; "Chj::singlequote"->import(qw(singlequote_sh_many));
     my $t= Chj::xtmpfile::xtmpfile ("/tmp/qmail-dkim_");
     $t->autoclean(0);
+    $t->xprint (singlequote_sh_many($0, @ARGV),"\n");
     for (sort keys %ENV) {
 	$t->xprint("$_=$ENV{$_}\n");
     }
