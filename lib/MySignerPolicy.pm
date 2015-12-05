@@ -35,8 +35,6 @@ use strict; use warnings FATAL => 'uninitialized';
 use Mail::DKIM::SignerPolicy;
 use Mail::DKIM::Signature;
 use Mail::DKIM::DkSignature;
-use Carp;
-use ConfigMerge qw(config_merge);
 
 sub new {
     my ($class,$config)=@_;
