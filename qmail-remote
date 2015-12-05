@@ -119,7 +119,6 @@ my $dkim;
 my $mailbuf = '';
 
 eval {
-    my $conf = $config->{'global'};
     $dkim =
 	Mail::DKIM::Signer->new(
 	    Policy => MySignerPolicy->new($config),
