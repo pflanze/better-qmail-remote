@@ -32,6 +32,9 @@ use lib "$mydir/chj-perllib";
 use lib "$mydir/functional-perl/lib";
 use lib "$mydir/lib";
 
+my ($host, $sender, @recip)= @ARGV;
+
+
 # use safe PATH setting:  XX make configurable?
 $ENV{PATH}=
   join(":",
@@ -84,15 +87,21 @@ my $binary= 0;
 
 our $config;
 
-$config->{'global'} = +{
-    types     => { dkim => {} },
-    keyfile   => '/var/qmail/control/dkim/global.key',
-    algorithm => 'rsa-sha256',
-    method    => 'simple',
-    selector  => 'global',
-    # either string or file (first line of file will be used)
-    domain    => '/var/qmail/control/me'
-};
+sub set_config_domain {
+    my ($domain)=@_;
+    $config->{'global'} = +{
+	types     => { dkim => {} },
+	keyfile   => '/var/qmail/control/dkim/global.key',
+	algorithm => 'rsa-sha256',
+	method    => 'simple',
+	selector  => 'global',
+	# either string or file (first line of file will be used)
+	domain    => $domain
+    };
+}
+
+set_config_domain ( $sender=~ m{[^@]+\@([^/]+)}s ? $1 : '/var/qmail/control/me' );
+# XXX: this allows *any* from address domain and will sign it!
 
 # ----------------------------------------------------------------------
 
@@ -205,8 +214,6 @@ eval {
 # ----------------------------------------------------------------------
 
 # Deliver the message, and add hashcash and the DKIM signature
-
-my ($host, $sender, @recip)= @ARGV;
 
 # execute qmail-remote
 open(QR, '|-') || exec ($qremote, map { untainted ($_) } @ARGV)
