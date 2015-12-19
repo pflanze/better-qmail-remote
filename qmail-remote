@@ -189,8 +189,14 @@ eval {
 		stopit;
 	    }
 	} else {
-	    # original part is missing the spamscore (odd?, but), go
-	    # on delivering it
+	    # The original part is missing the spamscore; this happens
+	    # if a mail is bigger than the size cut-off at which it is
+	    # being fed through SA (qpsmtpd has a hard-coded limit in
+	    # its `spamassassin` module, you need to patch it to
+	    # increase it!); or if spamd was not running.  To avoid
+	    # any chance of sending out spam as backscatter, do not
+	    # deliver it.
+	    stopit;
 	}
     } else {
 	# not a bounce. still check spamscore, even though it should
