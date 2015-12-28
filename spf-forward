@@ -1,0 +1,74 @@
+#!/usr/bin/perl -T
+#
+# Copyright (C) 2015 Christian Jaeger (ch at christianjaeger ch)
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either
+# version 2 of the License, or (at your option) any later
+# version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software Foundation,
+# Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+
+use strict; use warnings; use warnings FATAL => 'uninitialized';
+
+# find modules
+use Cwd 'abs_path';
+our ($mydir, $myname); BEGIN {
+    my $location= (-l $0) ? abs_path ($0) : $0;
+    $location=~ /(.*?)([^\/]+?)_?\z/s or die "?";
+    ($mydir, $myname)=($1,$2);
+}
+use lib "$mydir/chj-perllib";
+use lib "$mydir/functional-perl/lib";
+use lib "$mydir/lib";
+
+@ARGV >= 3
+  or die "usage: $0 newsender_pre newsender_post address(es)";
+
+my ($newsender_pre, $newsender_post, @address)= @ARGV;
+
+
+# use safe PATH setting:  XX make configurable?
+$ENV{PATH}=
+  join(":",
+       qw(/usr/local/sbin
+	  /usr/local/bin
+	  /usr/sbin
+	  /usr/bin
+	  /sbin
+	  /bin));
+
+use FP::untainted qw(untainted);
+
+my $sender= $ENV{SENDER}
+  // die "missing SENDER env variable";
+$sender=~ s/\@/=/g;
+
+my $newsender= do {
+    # XXX which characters exactly are all ok?
+    if (my ($ok)= $sender=~ /^([a-zA-Z=0-9.+-]+)\z/s) {
+	untainted($newsender_pre) . $ok . untainted($newsender_post)
+    } else {
+	warn "rewritefailure with sender='$sender'";
+	untainted($newsender_pre) . "rewritefailure" . untainted($newsender_post)
+    }
+};
+
+$ENV{NEWSENDER}= $newsender;
+
+if ($ENV{DRY_RUN}) {
+    print "NEWSENDER=$ENV{NEWSENDER} ";
+    print join(" ", "forward", (map { untainted $_ } @address)),"\n";
+} else {
+    exec "forward", (map { untainted $_ } @address)
+      or exit 127;
+}
