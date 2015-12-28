@@ -165,6 +165,22 @@ that I don't need it:
         </dkimsign>
 
 
+## spf-forward script
+
+Also included is a script `spf-forward` that can be used as a
+replacement for Qmail's `forward` program, but does sender rewriting
+so that SPF checks don't break.
+
+Its usage is: `spf-forward newsender_pre newsender_post address(es)`,
+for example use with a line in a .qmail (see `man dot-qmail`) file
+like this:
+
+     |/opt/better-qmail-remote/spf-forward forwarder- @example.com youremailaddressat@gmail.com
+
+A mail with `Return-Path: <foo@bar.com>` will now be forwarded with a
+new sender, `Return-Path: <forwarder-foo=bar.com@example.com>`
+
+
 ## Links
 
 Possibly useful links:
