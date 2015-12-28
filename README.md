@@ -180,6 +180,14 @@ like this:
 A mail with `Return-Path: <foo@bar.com>` will now be forwarded with a
 new sender, `Return-Path: <forwarder-foo=bar.com@example.com>`
 
+Note that this doesn't follow generic
+[SRS](https://en.wikipedia.org/wiki/Sender_Rewriting_Scheme) schemes:
+there's no code to handle bounces. The assumption is that you set up a
+`.qmail-forwarder-default` file that will forward bounces to an
+admin. It's then that admin's responsibility to figure out the new
+target address, or to inform the original sender of the mail about the
+failure (and remove the forwarding).
+
 
 ## Links
 
