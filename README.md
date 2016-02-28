@@ -4,20 +4,24 @@ This is a wrapper around qmail-remote that currently does the
 following jobs:
 
  - DKIM signing
- - hashcash if the `hashcash` tool is installed
- - avoid sending backscatter, by delivering bounces for mails with
-   high-ish spamassassin scores locally
+
+ - add hashcash header if the `hashcash` tool is installed (and
+   silently do not if it isn't)
+
+ - avoid sending backscatter, by diverting bounces for mails with
+   spamassassin headers with high-ish scores locally
 
 It being a wrapper written in Perl (with tainting checks on) means
 that there is no need to patch Qmail, i.e. it works with the `qmail`
 package from Debian (which is actually
 [netqmail](http://www.qmailwiki.org/Netqmail)) and there should be
-less risk of opening a security hole.
+less risk of opening up a security hole.
 
 It is a reworked version of the [dkim script from
 qmailtoaster](http://qmailtoaster.com/dkim.tgz). I'm running it on
 some small systems, where the overhead of running a Perl wrapper is
-irrelevant and where I can also easily afford to run hashcash.
+irrelevant (and where I can in fact also easily afford to run
+hashcash).
 
 This, together with using [qpsmtpd](https://smtpd.github.io/qpsmtpd/)
 in place of qmail-smtpd, should be enough to make Qmail work
