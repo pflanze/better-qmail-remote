@@ -37,16 +37,16 @@ use lib "$mydir/../lib";
 
 my ($inpath, $maybe_outpath)=@ARGV;
 
-use Spamscore qw(xcontentref perhaps_wholemail_doublebounce perhaps_wholemail_bounce);
+use Spamscore qw(xcontentref perhaps_wholemail_bounce);
 use Chj::xtmpfile;
 
 sub bounce_original {
     my ($inpath)=@_;
     my $rf= xcontentref $inpath;
-    if (my ($_drop, $orig)= perhaps_wholemail_doublebounce $$rf) {
+    if (my ($return, $orig)= perhaps_wholemail_bounce $$rf) {
 	$orig
     } else {
-	die "not a double bounce: '$inpath'"
+	die "not a bounce: '$inpath'"
     }
 }
 
