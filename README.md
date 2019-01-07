@@ -9,7 +9,8 @@ following jobs:
    silently do not if it isn't)
 
  - avoid sending backscatter, by diverting bounces for mails with
-   spamassassin headers with high-ish scores locally
+   spamassassin headers with high-ish scores locally (it also checks
+   non-bounces using a separate score)
 
 It being a wrapper written in Perl (with tainting checks on) means
 that there is no need to patch Qmail, i.e. it works with the `qmail`
@@ -108,13 +109,13 @@ address was misused for sending out the spam) are getting the
 bounce. This might lead to your server's future deliveries being
 penalized.
 
-Better-qmail-remote checks whether the outgoing email is a bounce, and
-if so, looks for an existing 'X-Spam-Status' header (as it was added
-by spamassassin when it arrived through e.g. qpsmtpd), and if the
-score is high-ish (currently hard coded in
-[qmail-remote](qmail-remote), "if ($spamscore >= 2.5)"), delivers
-locally instead, currently directly into a Maildir (the path of which
-is defined in [lib/Spambounce_config.pm](lib/Spambounce_config.pm)).
+Better-qmail-remote checks whether the outgoing email has an existing
+'X-Spam-Status' header (as it was added by spamassassin when it
+arrived through e.g. qpsmtpd), and if the score is high-ish (currently
+hard coded in [qmail-remote](qmail-remote), "if ($spamscore >= ",
+separately for the bounce case and other cases), delivers locally
+instead, currently directly into a Maildir (the path of which is
+defined in [lib/Spambounce_config.pm](lib/Spambounce_config.pm)).
 
 There's a tool included, `debounce`, that is meant to be run
 periodically (manually) and which then iterates over the mails in this
