@@ -199,10 +199,17 @@ eval {
 	    stopit;
 	}
     } else {
-	# not a bounce. still check spamscore, even though it should
-	# never have one in the current setup, just to be sure...
+	# not a bounce. still check spamscore, even though normal
+	# outgoing emails should never have one in the current setup
+	# (those don't run through spamassassin), but it happens for
+	# mailing lists (incoming mail gets score before
+	# delivery). There should be proper moderation instead (the
+	# disadvantage of this is that such mails are still making it
+	# to the mailing list archive, and there are as many
+	# duplicates of the mail landing in the Maildir_spambounce as
+	# there are subscribers), but better be safe.
 	if (my ($spamscore)= perhaps_wholemail_spamscore $mailbuf) {
-	    if ($spamscore > 5) {
+	    if ($spamscore > 3) {
 		stopit;
 	    }
 	} else {
