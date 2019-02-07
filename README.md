@@ -132,6 +132,17 @@ path is hard-coded in
 and how you would like to have it changeable). This is done by running
 the `setup-debounce` script as root.
 
+*NOTE*: (some?) recent Linux kernels come with link protections
+(CONFIG_AUDIT ?) enabled, which leads to the script failing with an
+error message saying 'xlink' .. 'permission denied'. This is due to
+the (non-root) user not owning the mail files. This protection can be
+disabled like:
+
+    echo 0 > /proc/sys/fs/protected_hardlinks  # and echo 0 > /proc/sys/fs/protected_symlinks ?
+
+(Presumably this could also be made selective per binary/script
+(SELinux or AppArmour)?)
+
 The scripts `bounce-original` and `doublebounce-original` simply
 extract the original incoming mail from a (double) bounce. They are
 provided as utilities for special circumstances.
