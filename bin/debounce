@@ -72,43 +72,53 @@ sub xadapt_path_orig ($) {
     die "could not find a free path like '$p'";
 }
 
+sub process($$) {
+    my ($path, $tmppath)=@_;
+    xsystem "less", $tmppath;
+    if (my $ans= askchoose_autonum_withcanceldef(["s", "(s)kip"],
+						 "spam", "ham")) {
+	my $maildir= +{
+		       spam=> $maildir_spam,
+		       ham=> $maildir_ham
+		      }->{detaint $ans}
+			or die "??";
+
+	# deliver the extracted part:
+	my $deliveredextract_path= deliver_file_maildir ($tmppath, $maildir);
+	# deliver the full, unextracted mail:
+	deliver_file_maildir detaint $path, $maildir_orig;
+
+	# use 'spam' / 'ham' also directly as the name of the tool
+	# for learning:
+	my @cmd=($ans, $deliveredextract_path);
+	warn "Running: ".singlequote_sh_many(@cmd);
+	xxsystem @cmd;
+    } else {
+	warn "skipped path '$path'\n";
+	unlink $tmppath; # or should it be left around for easy
+                         # cmdline hacking?
+    }
+}
+
 
 sub debounce {
     my ($path)=@_;
     my $rf= xcontentref $path;
+
+    # don't overwrite the original file!:
+    my $tmppath= xadapt_path_orig "$maildir_in/tmp/".detaint(basename($path));
+
     if (my ($return, $orig)= perhaps_wholemail_bounce $$rf) {
-	# don't overwrite the original file!:
-	my $tmp= xtmpfile xadapt_path_orig "$maildir_in/tmp/".detaint (basename($path));
+	my $tmp= xtmpfile $tmppath;
 	$tmp->xprint ($orig);
 	$tmp->xclose;
 	$tmp->xputback (0644);
-	xsystem "less", detaint $tmp->path;
-	if (my $ans= askchoose_autonum_withcanceldef ["s", "(s)kip"], "spam", "ham") {
-	    my $maildir= +{
-			   spam=> $maildir_spam,
-			   ham=> $maildir_ham
-			  }->{detaint $ans}
-			    or die "??";
-
-	    # deliver the extracted part:
-	    my $deliveredextract_path=
-	      deliver_file_maildir ($tmp->path,
-				    $maildir);
-	    # deliver the full, unextracted mail:
-	    deliver_file_maildir detaint $path, $maildir_orig;
-
-	    # use 'spam' / 'ham' also directly as the name of the tool
-	    # for learning:
-	    my @cmd=($ans, $deliveredextract_path);
-	    warn "Running: ".singlequote_sh_many(@cmd);
-	    xxsystem @cmd;
-	} else {
-	    warn "skipped path '$path'\n";
-	    unlink detaint $tmp->path; # or should it be left around
-                                       # for easy cmdline hacking?
-	}
+	process($path, $tmppath);
     } else {
-	die "not a bounce??(ah, allowing for that actually): $path"
+	# xlink detaint $path, $tmppath;
+	#  ah, ownership controls prevent this. Thus copy:
+	xxsystem "cp", "-a", "--", detaint($path), $tmppath;
+	process($path, $tmppath);
     }
 }
 
