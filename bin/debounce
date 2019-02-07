@@ -115,9 +115,11 @@ sub debounce {
 	$tmp->xputback (0644);
 	process($path, $tmppath);
     } else {
-	# xlink detaint $path, $tmppath;
-	#  ah, ownership controls prevent this. Thus copy:
-	xxsystem "cp", "-a", "--", detaint($path), $tmppath;
+	xlink detaint $path, $tmppath;
+	#  Kernel ownership controls prevent this for users not owning
+	#  the file. But no point in copying since mail delivery
+	#  relies on linking anyway as well.
+	# xxsystem "cp", "-a", "--", detaint($path), $tmppath;
 	process($path, $tmppath);
     }
 }
