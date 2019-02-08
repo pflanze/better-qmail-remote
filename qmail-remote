@@ -185,7 +185,7 @@ eval {
     } elsif (my ($return,$orig)= perhaps_wholemail_bounce $mailbuf) {
 	if (my ($spamscore)= perhaps_wholemail_spamscore $orig) {
 	    # likely spam to a non-existing address.
-	    if ($spamscore >= 2.5) {
+	    if ($spamscore >= 0.5) {
 		stopit;
 	    }
 	} else {
@@ -209,7 +209,7 @@ eval {
 	# duplicates of the mail landing in the Maildir_spambounce as
 	# there are subscribers), but better be safe.
 	if (my ($spamscore)= perhaps_wholemail_spamscore $mailbuf) {
-	    if ($spamscore > 3) {
+	    if ($spamscore > 1) {
 		stopit;
 	    }
 	} else {
