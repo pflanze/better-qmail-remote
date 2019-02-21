@@ -37,7 +37,7 @@ use lib "$mydir/../lib";
 
 my ($inpath, $maybe_outpath)=@ARGV;
 
-use Spamscore qw(xcontentref perhaps_wholemail_doublebounce perhaps_wholemail_bounce);
+use Spamscore qw(xcontentref perhaps_wholemail_doublebounce);
 use Chj::xtmpfile;
 
 sub bounce_original {
