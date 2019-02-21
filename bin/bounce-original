@@ -22,7 +22,9 @@ use strict; use warnings; use warnings FATAL => 'uninitialized';
 
 # find modules
 use Cwd 'abs_path';
-our ($mydir, $myname); BEGIN {
+our ($mydir, $myname, $myorigname); BEGIN {
+    $0=~ /(.*?)([^\/]+?)_?\z/s or die "?";
+    ($myorigname)=($2);
     my $location= (-l $0) ? abs_path ($0) : $0;
     $location=~ /(.*?)([^\/]+?)_?\z/s or die "?";
     ($mydir, $myname)=($1,$2);
@@ -31,22 +33,42 @@ use lib "$mydir/../chj-perllib";
 use lib "$mydir/../functional-perl/lib";
 use lib "$mydir/../lib";
 
+use Spamscore qw(xcontentref
+		 perhaps_wholemail_bounce
+		 perhaps_wholemail_doublebounce);
+use Chj::xtmpfile;
+
+
+my $ctx=
+  $myorigname eq "bounce-original" ?
+  +{
+    kindtext=> "bounce",
+    extract=> \&perhaps_wholemail_bounce,
+   }
+  :
+  $myorigname eq "doublebounce-original" ?
+  +{
+    kindtext=> "double bounce",
+    extract=> \&perhaps_wholemail_doublebounce,
+   }
+  : die "??";
+
+
 @ARGV==1 or @ARGV==2
-  or die "usage: $0 inpath [outpath]
-  strip bounce header from mail at inpath. print to outpath or STDOUT.\n";
+  or die "usage: $myorigname inpath [outpath]
+  strip $$ctx{kindtext} 'header' from mail at inpath.
+  print to outpath or STDOUT.\n";
 
 my ($inpath, $maybe_outpath)=@ARGV;
 
-use Spamscore qw(xcontentref perhaps_wholemail_bounce);
-use Chj::xtmpfile;
 
 sub bounce_original {
     my ($inpath)=@_;
     my $rf= xcontentref $inpath;
-    if (my ($return, $orig)= perhaps_wholemail_bounce $$rf) {
+    if (my ($_ignore, $orig)= $$ctx{extract}($$rf)) {
 	$orig
     } else {
-	die "not a bounce: '$inpath'"
+	die "not a ".$$ctx{kindtext}.": '$inpath'"
     }
 }
 
