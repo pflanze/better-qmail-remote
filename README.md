@@ -204,6 +204,18 @@ admin. It's then that admin's responsibility to figure out the new
 target address, or to inform the original sender of the mail about the
 failure (and remove the forwarding).
 
+### spf-forward-mailfile script
+
+While `spf-forward` is for automatic use within Qmail's processing
+chain and would be tedious to use manually, there is a script
+`bin/spf-forward-mailfile` which wraps `spf-forward` to allow for
+forwarding of mails stored in files (as in Maildirs). It uses the
+`EMAIL` environment variable to construct the newsender_pre
+newsender_post parts automatically, blindly assuming that the user
+part of your email can be used with "-" and the mangled original
+sender email appended. If you want to see what it runs, set the
+`VERBOSE` env var to 1.
+
 
 ## Links
 
