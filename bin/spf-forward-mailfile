@@ -1,0 +1,90 @@
+#!/usr/bin/perl
+#
+# Copyright (C) 2020 Christian Jaeger (ch at christianjaeger ch)
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either
+# version 2 of the License, or (at your option) any later
+# version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software Foundation,
+# Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+
+
+use strict; use warnings; use warnings FATAL => 'uninitialized';
+
+# find modules
+use Cwd 'abs_path';
+our ($mydir, $myname); BEGIN {
+    my $location= (-l $0) ? abs_path ($0) : $0;
+    $location=~ /(.*?)([^\/]+?)_?\z/s or die "?";
+    ($mydir, $myname)=($1,$2);
+}
+use lib "$mydir/chj-perllib";
+use lib "$mydir/functional-perl/lib";
+use lib "$mydir/lib";
+
+@ARGV > 1
+  or die "usage: $0 file address(es)
+
+  Wrapper around 'spf-forward' to forward mails from the command line
+  interactively. Sets up the SENDER and DTLINE env variables and
+  creates a return path address out of the email address in the EMAIL
+  env variable.
+
+";
+
+use Spamscore qw(xcontentref
+		 mailstring_xhead
+		 mailheadstring_perhaps_headerfirstline);
+
+sub trimspace ($) {
+    my ($str)= @_;
+    $str=~ s/^\s*//s;
+    $str=~ s/\s*\z//s;
+    $str
+}
+
+
+my $spf_forward= "$mydir/spf-forward";
+
+my $file= shift @ARGV;
+my @toaddresses= @ARGV;
+
+my $email= $ENV{EMAIL}
+  // die "missing EMAIL environment variable";
+
+my ($pre, $post)= $email=~ m/^([^@]+)(@[^@]+)\z/
+  or die "no match for EMAIL '$email'";
+$pre= "$pre-";
+
+my $cr= xcontentref $file;
+my $head= mailstring_xhead $$cr;
+
+my ($sender)= mailheadstring_perhaps_headerfirstline($head, "sender")
+  or die "could not find Sender header in mail '$file'";
+# XXX hacky (to only get first line). Could this be used for hacking?
+
+$ENV{SENDER}= trimspace($sender);
+# should be a bare email address
+
+$ENV{DTLINE}= "";
+
+warn "Calling (about): SENDER='$ENV{SENDER}' DTLINE='$ENV{DTLINE}' "
+  .join(" ", map{"'$_'"} $spf_forward, $pre, $post, @toaddresses)
+  ." < '$file'\n"
+  if $ENV{VERBOSE};
+
+open STDIN, "<", $file
+  or die "could not open file '$file': $!";
+
+exec $spf_forward, $pre, $post, @toaddresses
+  or exit 127;
+
