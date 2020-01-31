@@ -24,7 +24,11 @@ package Spamscore;
 	   perhaps_wholemail_bounce
 	   perhaps_wholemail_spamscore_bounce
 	 );
-@EXPORT_OK=qw(xcontentref);
+@EXPORT_OK=qw(
+           xcontentref
+           mailstring_xhead
+           mailheadstring_perhaps_headerfirstline
+           );
 %EXPORT_TAGS=(all=>[@EXPORT,@EXPORT_OK]);
 
 sub xcontentref {
@@ -38,10 +42,22 @@ sub xcontentref {
 
 my $NL= qr/(?:\015?\012)/;
 
-sub perhaps_wholemail_spamscore ($) {
+sub mailstring_xhead ($) {
     #my ($str)=@_;
     my ($head)= $_[0]=~ /^(.*?)(?:$NL{2}|$)/s
-      or die "can't parse head";
+        or die "can't parse head";
+    $head
+}
+
+sub mailheadstring_perhaps_headerfirstline ($$) {
+    my ($head,$headername)=@_;
+    $head=~ /(?:^|$NL)$headername:(.*?)(?:$NL|\z)/i
+}
+
+
+sub perhaps_wholemail_spamscore ($) {
+    #my ($str)=@_;
+    my $head= mailstring_xhead $_[0];
     if (my ($score)= $head=~ /${NL}X-Spam-Status:.*score=(\S+)/) {
 	$score
     } else {
