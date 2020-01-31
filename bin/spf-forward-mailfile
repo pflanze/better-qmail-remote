@@ -71,9 +71,20 @@ $pre= "$pre-";
 my $cr= xcontentref $file;
 my $head= mailstring_xhead $$cr;
 
-my ($sender)= mailheadstring_perhaps_headerfirstline($head, "sender")
-  or die "could not find Sender header in mail '$file'";
-# XXX hacky (to only get first line). Could this be used for hacking?
+# XXX hacky to only get first lines. Could this be used for hacking?
+my $sender= do {
+    if (my ($actual_sender)= mailheadstring_perhaps_headerfirstline $head, "sender") {
+	$actual_sender
+    } else {
+	my ($rp)= mailheadstring_perhaps_headerfirstline($head, "return-path")
+	  or die "could not find Sender nor Return-Path headers in mail '$file'";
+	$rp= trimspace $rp;
+	# now have to strip angle brackets.
+	$rp=~ s/^<//;
+	$rp=~ s/>\z//;
+	$rp
+    }
+};
 
 $ENV{SENDER}= trimspace($sender);
 # should be a bare email address
