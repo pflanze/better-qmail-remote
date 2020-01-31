@@ -22,14 +22,17 @@ use strict; use warnings; use warnings FATAL => 'uninitialized';
 
 # find modules
 use Cwd 'abs_path';
-our ($mydir, $myname); BEGIN {
+our ($mydir, $myname, $mybasedir); BEGIN {
     my $location= (-l $0) ? abs_path ($0) : $0;
     $location=~ /(.*?)([^\/]+?)_?\z/s or die "?";
     ($mydir, $myname)=($1,$2);
+    $mybasedir= $mydir; $mybasedir=~ s{/*bin/*\z}{};
 }
-use lib "$mydir/chj-perllib";
-use lib "$mydir/functional-perl/lib";
-use lib "$mydir/lib";
+
+
+use lib "$mybasedir/chj-perllib";
+use lib "$mybasedir/functional-perl/lib";
+use lib "$mybasedir/lib";
 
 @ARGV > 1
   or die "usage: $0 file address(es)
@@ -53,7 +56,7 @@ sub trimspace ($) {
 }
 
 
-my $spf_forward= "$mydir/spf-forward";
+my $spf_forward= "$mybasedir/spf-forward";
 
 my $file= shift @ARGV;
 my @toaddresses= @ARGV;
