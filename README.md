@@ -1,6 +1,6 @@
 # Better-qmail-remote
 
-This is a wrapper around qmail-remote that currently does the
+This is a wrapper around `qmail-remote` that currently does the
 following jobs:
 
  - DKIM signing
@@ -50,7 +50,7 @@ Check out the latest release (unless you want the latest changes and fixes):
 
     v=`git tag -l | grep '^v' | sort |tail -1`
     # to check the signature
-    gpg --recv-key 0FA5B21104EDB072
+    gpg --recv-key A54A1D7CA1F94C866AC81A1F0FA5B21104EDB072
     git tag -v "$v"
     # check it out as a branch
     git checkout -b "$v" "$v"
