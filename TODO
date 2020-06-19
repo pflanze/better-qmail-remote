@@ -5,3 +5,6 @@
 
    - perhaps somehow leading to double spend of tokens
 
+* Is it OK that the signature is always the same when using the same
+  key and mail?
+
