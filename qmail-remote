@@ -61,6 +61,8 @@ use DeliverMaildir 'deliver_wholemail_maildir';
 use FP::untainted qw(untainted);
 use Spambounce_config qw(maildir_spambounce_path);
 use Chj::xopen qw(xopen_read);
+use Hash::Util 'lock_hash';
+
 
 sub xfirst_line {
     my ($path)= @_;
@@ -114,6 +116,8 @@ sub set_config_domain {
 set_config_domain ( $sender=~ m{[^@]+\@([^/]+)}s ? $1
 		    : xfirst_line('/var/qmail/control/me') );
 # XXX: this allows *any* from address domain and will sign it!
+
+lock_hash %$config;
 
 # ----------------------------------------------------------------------
 
