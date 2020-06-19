@@ -2,6 +2,7 @@
 
 export BETTER_QMAIL_REMOTE__DEBUG=1
 export BETTER_QMAIL_REMOTE__ORIG=test/receiver
+export BETTER_QMAIL_REMOTE__KEYDIR=test/qmail-control-dkim
 
 exec ./qmail-remote gmail.com 'ch@leafpair.com' 'chrjae@gmail.com' < test/in
 

@@ -90,9 +90,10 @@ our $config;
 
 sub set_config_domain {
     my ($domain)=@_;
+    my $keydir= $ENV{BETTER_QMAIL_REMOTE__KEYDIR} || '/var/qmail/control/dkim';
     $config->{'global'} = +{
 	types     => { dkim => {} },
-	keyfile   => '/var/qmail/control/dkim/global.key',
+	keyfile   => "$keydir/global.key",
 	algorithm => 'rsa-sha256',
 	method    => 'simple',
 	selector  => 'global',
