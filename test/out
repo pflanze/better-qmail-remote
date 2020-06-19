@@ -1,0 +1,17 @@
+CMD: test/receiver gmail.com ch@leafpair.com chrjae@gmail.com
+CONTENT:
+X-Hashcash: REDACTED
+DKIM-Signature: v=1; a=rsa-sha256; c=simple; d=leafpair.com; h=from:to;
+	 s=global; bh=qcG+70HcCY16u72J64YuJDGuea5BVsQFKDy7iQIMC/Y=; b=aw
+	ccIDuGYX4pcwop9sNMFUY8aDCzWwrum3LMRJEhjkCxpXZJDPlB45htYu7DG4/qQz
+	EIL5PAogdJ2MQYgj6tyIl33A+um9hWME2eYiAI2MeEgErZTzWaU4cTKegM+yv5EV
+	eNFGbeRKzEHRwJW1/QBvRFbZkPvSNaqjbstABCkwfMvjJpRZcJOwzNqs6ZullT+Q
+	Zo/jNTvsalun+AmtmtvQP6DweEaqz5cLRB4031NCEH5EAlPXkQ/sgcQjahGhul5z
+	GX36PdfxUfcmtfBbU5LRL3JFeQOOw5YeSqXhiW9LlVxXB82bS4E/C6CJOEjPmXmQ
+	IFmcst/9bzvb3N/1sFjw==
+From: foo
+To: bar
+
+Hi
+
+There.

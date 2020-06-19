@@ -5,9 +5,9 @@ export LANG=C
 {
 
 echo "CMD:" "$0" "$@"
-echo "ENV:"
-printenv | sort
 echo "CONTENT:"
 cat
 
-} > test/out
+} > test/run.out
+
+perl -wne 's/(X-Hashcash: ).*/${1}REDACTED/; print' < test/run.out > test/out
