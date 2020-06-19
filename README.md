@@ -109,6 +109,15 @@ Then run like:
     mv default.private /var/qmail/control/dkim/global.key 
 
 
+### Test suite
+
+Run the following from the better-qmail-remote directory to run the
+test suite. The test suite assumes that the `hashcash` tool is
+installed.
+
+    make test
+
+
 ## Backscatter avoidance
 
 Neither Qmail's own qmail-smtpd nor
