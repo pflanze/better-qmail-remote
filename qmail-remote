@@ -58,7 +58,7 @@ use QmailExit ":all";
 use HashCash qw(have_hashcash mint_hashcash);
 use Spamscore ":all";
 use DeliverMaildir 'deliver_wholemail_maildir';
-use FP::untainted qw(untainted);
+use FP::Untainted qw(untainted);
 use Spambounce_config qw(maildir_spambounce_path);
 use Chj::xopen qw(xopen_read);
 use Hash::Util 'lock_hash';

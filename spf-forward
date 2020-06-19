@@ -47,7 +47,7 @@ $ENV{PATH}=
 	  /sbin
 	  /bin));
 
-use FP::untainted qw(untainted);
+use FP::Untainted qw(untainted);
 
 my $sender= $ENV{SENDER}
   // die "missing SENDER env variable";
