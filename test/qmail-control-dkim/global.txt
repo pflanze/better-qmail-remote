@@ -1,0 +1,3 @@
+default._domainkey	IN	TXT	( "v=DKIM1; h=sha256; k=rsa; "
+	  "p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAyIMydX3Wy1j8t/oCJpXfse95T6/K8+yzOlBOvUl5BhSvvLDNpILW6QwnRlnB0ySusM1FV6DqDhkAwjGFixVzK17HY1Pv6KXBufGIUAn30clCWOBQ4+rx6qm4yooqmMudam3uwdEvjJbMyXI756VvLToyBgvS3AkBwP6p1ni2kIIQ7mEfcb51j180cYZP4iqhVgNkrfFII128s4"
+	  "hz/Qvl4M7JbOYBytBBQfqsmo663Xfuoj6Olp+jmzgcbL7eKAR1UM2Iqurmpq7+b0igpYmpqZyuAWOwPiHfkzyS+7mOyncb1TmfVeWdack+oA4ewKOhFKiEbc7Pbrrv2NCq441vCQIDAQAB" )  ; ----- DKIM key default for localhost
