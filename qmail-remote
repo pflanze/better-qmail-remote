@@ -103,16 +103,24 @@ our $config;
 sub set_config_domain {
     my ($domain)=@_;
     my $keydir= $ENV{BETTER_QMAIL_REMOTE__KEYDIR} || '/var/qmail/control/dkim';
-    my $cfg= +{
-	types     => { dkim => {} },
-	keyfile   => "$keydir/global.key",
-	algorithm => 'rsa-sha256',
-	method    => 'simple',
-	selector  => 'global',
-	domain    => $domain
-    };
-    lock_hash %$cfg;
-    $config->{'global'} = $cfg;
+    # Loop through all available .key files, add as corresponding
+    # selector, implementing
+    # https://github.com/pflanze/better-qmail-remote/issues/1 :
+    for my $keyfile (sort glob "$keydir/*.key") {
+	my ($selector)= $keyfile=~ m{([^/]+)\.key$}s
+	    or die "BUG: can't extract selector from file '$keyfile'";
+	# $selector would e.g. be 'global'.
+	my $cfg = +{
+	    types     => { dkim => {} },
+	    keyfile   => $keyfile,
+	    algorithm => 'rsa-sha256',
+	    method    => 'simple',
+	    selector  => $selector,
+	    domain    => $domain
+	};
+	lock_hash %$cfg;
+	$config->{$selector} = $cfg;
+    }
 }
 
 set_config_domain ( $sender=~ m{[^@]+\@([^/]+)}s ? $1

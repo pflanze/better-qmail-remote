@@ -107,6 +107,7 @@ Then run like:
 
     opendkim-genkey  # for options see `man opendkim-genkey`
     mv default.private /var/qmail/control/dkim/global.key 
+    # ^ or replace 'global' with whatever selector you want
 
 
 ### Test suite

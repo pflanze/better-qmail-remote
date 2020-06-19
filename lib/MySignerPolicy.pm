@@ -59,70 +59,71 @@ sub apply {
 	(undef, $domain) = split(/\./, $domain, 2);
     }
 
-    my $conf = $self->config->{'global'};
-    return 0
-	if (!defined($conf->{'types'}) || defined($conf->{'types'}->{'none'}));
-
-    # set key file
-    $signer->key_file($conf->{'keyfile'});
-
-    # parse (signature) domain
-    if (substr($conf->{'domain'}, 0, 1) eq '/') {
-	open(FH, '<', $conf->{'domain'})
-	    or croak('Unable to open domain-file: '.$!);
-	my $newdom = (split(/ /, <FH>))[0];
-	close(FH);
-	croak("Unable to read domain-file. Maybe empty file.")
-	    if (!$newdom);
-	chomp($newdom);
-	$conf->{'domain'} = $newdom;
-    }
-
-    # generate signatures
     my $sigdone = 0;
-    for my $type (keys(%{$conf->{'types'}})) {
-	my $sigconf = $conf->{'types'}->{$type};
+    for my $selector (sort keys %{$self->config}) {
+	my $conf = $self->config->{$selector};
+	next # XX or report an error?
+	    if (!defined($conf->{'types'}) || defined($conf->{'types'}->{'none'}));
 
-	my $get= sub {
-	    my ($key)=@_;
-	    my $fallback= exists $conf->{$key} ? $conf->{$key} : undef;
-	    exists $sigconf->{$key} ? ($sigconf->{$key} || $fallback) : $fallback
-	};
-	my $getm= sub {
-	    my ($key)=@_;
-	    &$get($key) || $signer->$key
-	};
+	# set key file
+	$signer->key_file($conf->{'keyfile'});
 
-	if ($type eq 'dkim') {
-	    $signer->add_signature(
-		new Mail::DKIM::Signature(
-		    Algorithm  => &$getm('algorithm'),
-		    Method     => &$getm('method'),
-		    Headers    => &$getm('headers'),
-		    Domain     => &$getm('domain'),
-		    Selector   => &$getm('selector'),
-		    Query      => &$get('query'),
-		    Identity   => &$get('identity'),
-		    Expiration => &$get('expiration'),
-		)
-		);
-	    $sigdone = 1;
+	# parse (signature) domain
+	if (substr($conf->{'domain'}, 0, 1) eq '/') {
+	    open(FH, '<', $conf->{'domain'})
+		or croak('Unable to open domain-file: '.$!);
+	    my $newdom = (split(/ /, <FH>))[0];
+	    close(FH);
+	    croak("Unable to read domain-file. Maybe empty file.")
+		if (!$newdom);
+	    chomp($newdom);
+	    $conf->{'domain'} = $newdom;
 	}
-	elsif ($type eq 'domainkey') {
-	    $signer->add_signature(
-		new Mail::DKIM::DkSignature(
-		    Algorithm  => 'rsa-sha1', # only rsa-sha1 supported
-		    Method     => &$getm('method'),
-		    Headers    => &$getm('selector'),
-		    Domain     => &$getm('domain'),
-		    Selector   => &$getm('selector'),
-		    Query      => &$get('query')
-		)
-		);
-	    $sigdone = 1;
+
+	# generate signatures
+	for my $type (keys(%{$conf->{'types'}})) {
+	    my $sigconf = $conf->{'types'}->{$type};
+
+	    my $get= sub {
+		my ($key)=@_;
+		my $fallback= exists $conf->{$key} ? $conf->{$key} : undef;
+		exists $sigconf->{$key} ? ($sigconf->{$key} || $fallback) : $fallback
+	    };
+	    my $getm= sub {
+		my ($key)=@_;
+		&$get($key) || $signer->$key
+	    };
+
+	    if ($type eq 'dkim') {
+		$signer->add_signature(
+		    new Mail::DKIM::Signature(
+			Algorithm  => &$getm('algorithm'),
+			Method     => &$getm('method'),
+			Headers    => &$getm('headers'),
+			Domain     => &$getm('domain'),
+			Selector   => &$getm('selector'),
+			Query      => &$get('query'),
+			Identity   => &$get('identity'),
+			Expiration => &$get('expiration'),
+		    )
+		    );
+		$sigdone = 1;
+	    }
+	    elsif ($type eq 'domainkey') {
+		$signer->add_signature(
+		    new Mail::DKIM::DkSignature(
+			Algorithm  => 'rsa-sha1', # only rsa-sha1 supported
+			Method     => &$getm('method'),
+			Headers    => &$getm('selector'),
+			Domain     => &$getm('domain'),
+			Selector   => &$getm('selector'),
+			Query      => &$get('query')
+		    )
+		    );
+		$sigdone = 1;
+	    }
 	}
     }
-
     return $sigdone;
 }
 
