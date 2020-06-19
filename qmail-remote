@@ -103,7 +103,7 @@ our $config;
 sub set_config_domain {
     my ($domain)=@_;
     my $keydir= $ENV{BETTER_QMAIL_REMOTE__KEYDIR} || '/var/qmail/control/dkim';
-    $config->{'global'} = +{
+    my $cfg= +{
 	types     => { dkim => {} },
 	keyfile   => "$keydir/global.key",
 	algorithm => 'rsa-sha256',
@@ -111,6 +111,8 @@ sub set_config_domain {
 	selector  => 'global',
 	domain    => $domain
     };
+    lock_hash %$cfg;
+    $config->{'global'} = $cfg;
 }
 
 set_config_domain ( $sender=~ m{[^@]+\@([^/]+)}s ? $1

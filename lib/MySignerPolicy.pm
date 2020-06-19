@@ -85,7 +85,8 @@ sub apply {
 
 	my $get= sub {
 	    my ($key)=@_;
-	    $sigconf->{$key} || $conf->{$key}
+	    my $fallback= exists $conf->{$key} ? $conf->{$key} : undef;
+	    exists $sigconf->{$key} ? ($sigconf->{$key} || $fallback) : $fallback
 	};
 	my $getm= sub {
 	    my ($key)=@_;
