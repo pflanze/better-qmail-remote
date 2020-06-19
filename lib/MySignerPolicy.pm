@@ -69,7 +69,7 @@ sub apply {
 
     # merge configs
     while ($domain) {
-	if (defined($self->config->{$domain})) {
+	if (exists $self->config->{$domain}) {
 	    $self->config->{'global'}->{'types'} = undef;
 	    ConfigMerge::merge($self->config->{'global'}, $self->config->{$domain});
 	    last;
