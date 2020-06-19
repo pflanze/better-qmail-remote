@@ -240,6 +240,13 @@ sender email appended. If you want to see what it runs, set the
 `VERBOSE` env var to 1.
 
 
+## Hacking
+
+If `BETTER_QMAIL_REMOTE__DEBUG` is set to a true value (for Perl,
+e.g. `1`), as is done by the test suite, a file is written with the
+debugging output and the file path is written to stderr.
+
+
 ## Links
 
 Possibly useful links:
