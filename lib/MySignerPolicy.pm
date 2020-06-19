@@ -81,7 +81,9 @@ sub apply {
     for my $selector (sort keys %{$self->config}) {
 	my $conf = $self->config->{$selector};
 	next # XX or report an error?
-	    if (!defined($conf->{'types'}) || defined($conf->{'types'}->{'none'}));
+	  if (!exists($conf->{'types'})
+	      ||
+	      (exists($conf->{'types'}->{'none'}) and defined($conf->{'types'}->{'none'})));
 
 	# set key file
 	$signer->key_file($conf->{'keyfile'});
