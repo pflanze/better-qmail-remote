@@ -19,6 +19,7 @@ mkdir /var/qmail/control/dkim
 
 # Generate our DKIM keys, both public and private
 dknewkey /var/qmail/control/dkim/global.key > /var/qmail/control/dkim/public.txt
+# or use opendkim-genkey as mentioned in README.md
 
 # Change DKIM DNS selector value
 perl -pi -e 's/global.key._domainkey/dkim1/' /var/qmail/control/dkim/public.txt

@@ -96,6 +96,19 @@ Activate the wrapper:
     ln -s /opt/better-qmail-remote/qmail-remote /usr/sbin/
 
 
+### Key generation
+
+If you don't have actual DKIM keys yet, you can use the command line
+tool `opendkim-genkey` which you can get on Debian sytems via:
+
+    apt-get install opendkim-tools
+
+Then run like:
+
+    opendkim-genkey  # for options see `man opendkim-genkey`
+    mv default.private /var/qmail/control/dkim/global.key 
+
+
 ## Backscatter avoidance
 
 Neither Qmail's own qmail-smtpd nor
