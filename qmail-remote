@@ -156,7 +156,8 @@ my $mailbuf = '';
 eval {
     $dkim =
 	Mail::DKIM::Signer->new(
-	    Policy => MySignerPolicy->new($config),
+	    Policy => MySignerPolicy->new($config,
+					  $maybe_debugfh ? \&Debug : undef),
 	    Debug_Canonicalization => $maybe_debugfh
 	);
 

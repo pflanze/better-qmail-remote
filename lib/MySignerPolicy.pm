@@ -37,8 +37,24 @@ use Mail::DKIM::Signature;
 use Mail::DKIM::DkSignature;
 
 sub new {
-    my ($class,$config)=@_;
-    bless {config=> $config}, $class
+    my ($class, $config, $maybe_debugprint)=@_;
+    bless { config=> $config,
+	    maybe_debugprint=> $maybe_debugprint }, $class
+}
+
+sub debug {
+    my $self=shift;
+    if (my $pr= $self->{maybe_debugprint}) {
+	my @args= map {
+	    if (ref $_) {
+		require Data::Dumper;
+		Data::Dumper::Dumper($_)
+	    } else {
+		$_
+	    }
+	} @_;
+	$pr->(@args)
+    }
 }
 
 sub config { shift->{config} }
@@ -48,6 +64,8 @@ sub apply {
     my ($self, $signer) = @_;
     my $host= $signer->message_sender->host;
     my $domain = $host && lc $host;
+
+    $self->debug("apply config", $self->config);
 
     # merge configs
     while ($domain) {
