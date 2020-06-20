@@ -48,6 +48,7 @@ sub debug {
 	my @args= map {
 	    if (ref $_) {
 		require Data::Dumper;
+		local $Data::Dumper::Sortkeys=1;
 		Data::Dumper::Dumper($_)
 	    } else {
 		$_
