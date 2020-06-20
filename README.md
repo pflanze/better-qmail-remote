@@ -100,7 +100,7 @@ suffix is taken to be the selector name. For every key file,
 `qmail-remote` also looks for the following files and if present uses
 their contents (just their first line, usually) instead of the defaults:
 
-    * `$selector.c`: the method, default: `relaxed/relaxed`
+    * `$selector.c.txt`: the method, default: `relaxed/relaxed`
 
 There is also a left-over from the old way how the original project
 better-qmail-remote is based on was configured, see the "XML config
