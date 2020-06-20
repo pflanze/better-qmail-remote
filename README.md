@@ -124,9 +124,9 @@ Then run like:
     mv default.private /var/qmail/control/dkim/global.key 
     # ^ or replace 'global' with whatever selector you want
 
-If you want to create EdDSA keys, please have a look at the article
+If you want to create EdDSA keys, you can use the included script
+`opendkim-genkey-eddsa`.  For details, have a look at the article
 [How to use DKIM with Ed25519](https://www.mailhardener.com/kb/how-to-use-dkim-with-ed25519).
-
 
 ### Test suite
 

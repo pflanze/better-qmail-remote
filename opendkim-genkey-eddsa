@@ -1,0 +1,34 @@
+#!/bin/bash
+
+set -euo pipefail
+IFS=
+
+usage () {
+    echo "$0 \$basepath"
+    echo "  Creates the files \`\$basepath.key\` and"
+    echo "  \`\$basepath.algorithm.txt\`."
+    exit 1
+}
+
+if [[ $# -eq 0 ]]; then
+    usage
+fi
+
+if [ "$1" = "-h" -o "$1" = "--help" ]; then
+    usage
+fi
+
+basepath="$1"
+
+openssl genpkey -algorithm ed25519 -out "$basepath".key
+
+openssl pkey -in "$basepath".key -pubout -out "$basepath"_public.pem
+
+openssl asn1parse -in "$basepath"_public.pem -offset 12 -noout \
+	-out /dev/stdout | openssl base64 > "$basepath".DKIM-record-p-value.txt
+
+echo "v=DKIM1; k=ed25519; p=$(< "$basepath".DKIM-record-p-value.txt)" \
+     > "$basepath".DKIM-record.txt
+
+echo ed25519-sha256 > "$basepath".algorithm.txt
+
