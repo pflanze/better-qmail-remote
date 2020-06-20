@@ -101,6 +101,7 @@ suffix is taken to be the selector name. For every key file,
 their contents (just their first line, usually) instead of the defaults:
 
     * `$selector.c.txt`: the method, default: `relaxed/relaxed`
+    * `$selector.algorithm.txt`: the key algorithm, default: `rsa-sha256`
 
 There is also a left-over from the old way how the original project
 better-qmail-remote is based on was configured, see the "XML config
