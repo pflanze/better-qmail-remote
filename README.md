@@ -100,10 +100,10 @@ suffix is taken to be the selector name. For every key file,
 `qmail-remote` also looks for the following files and if present uses
 their contents (just their first line, usually) instead of the defaults:
 
-    * `$selector.method.txt`: the 'c' value in the signature, default:
-      `relaxed/relaxed`
-    * `$selector.algorithm.txt`: the key algorithm ('a' value in the
-      signature), default: `rsa-sha256`
+* `$selector.method.txt`: the 'c' value in the signature, default:
+    `relaxed/relaxed`
+* `$selector.algorithm.txt`: the key algorithm ('a' value in the
+    signature), default: `rsa-sha256`
 
 There is also a left-over from the old way how the original project
 better-qmail-remote is based on was configured, see the "XML config
