@@ -19,7 +19,7 @@ package from Debian (which is actually
 less risk of opening up a security hole.
 
 It is a reworked version of the [dkim script from
-qmailtoaster](http://qmailtoaster.com/dkim.tgz). I'm running it on
+qmailtoaster](http://qmailtoaster.com/dkim). I'm running it on
 some small systems, where the overhead of running a Perl wrapper is
 irrelevant (and where I can in fact also easily afford to run
 hashcash).
@@ -192,7 +192,7 @@ provided as utilities for special circumstances.
 ## XML config file structure
 
 The original
-[dkim script from qmailtoaster](http://qmailtoaster.com/dkim.tgz) had
+[dkim script from qmailtoaster](http://qmailtoaster.com/dkim) had
 code to read an XML file that configures the DKIM keys to be
 used. This code was left in, but the author is not currently using it
 (instead better-qmail-remote prefers a different approach, see
