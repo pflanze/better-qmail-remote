@@ -112,8 +112,9 @@ file structure" section.
 
 ### Key generation
 
-If you don't have actual DKIM keys yet, you can use the command line
-tool `opendkim-genkey` which you can get on Debian sytems via:
+If you don't have actual DKIM keys yet, to create RSA keys, you can
+use the command line tool `opendkim-genkey` which you can get on
+Debian sytems via:
 
     apt-get install opendkim-tools
 
@@ -122,6 +123,9 @@ Then run like:
     opendkim-genkey  # for options see `man opendkim-genkey`
     mv default.private /var/qmail/control/dkim/global.key 
     # ^ or replace 'global' with whatever selector you want
+
+If you want to create EdDSA keys, please have a look at the article
+[How to use DKIM with Ed25519](https://www.mailhardener.com/kb/how-to-use-dkim-with-ed25519).
 
 
 ### Test suite
