@@ -135,7 +135,7 @@ sub set_config_domain {
 	# $selector would e.g. be 'global'.
 	my $keyfile_config_base= $keyfile;
 	$keyfile_config_base=~ s/\.key$//;
-	my $method= maybe_first_line("$keyfile_config_base.c.txt")
+	my $method= maybe_first_line("$keyfile_config_base.method.txt")
 	    || 'relaxed/relaxed';
 	my $algorithm= maybe_first_line("$keyfile_config_base.algorithm.txt")
 	    || 'rsa-sha256';
