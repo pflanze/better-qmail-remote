@@ -82,11 +82,6 @@ check the captured bounces, then set up the Maildirs using:
 
     /opt/better-qmail-remote/setup-debounce yourgroupname
 
-If you want to use the XML configuration feature for DKIM keys: read
-the contents of the file `install.sh`. Don't just run it, it will be
-out of date. NOTE: this has not been tested since making the changes
-to the original script. TODO: update or merge/drop install.sh.
-
 Activate the wrapper:
 
     # on Debian:
@@ -94,6 +89,18 @@ Activate the wrapper:
     # otherwise just `mv /usr/sbin/qmail-remote{,.orig}`, but you'll 
     # have to do it again after package upgrades.
     ln -s /opt/better-qmail-remote/qmail-remote /usr/sbin/
+
+
+## Configuration
+
+better-qmail-remote tries to use sane defaults, so the only files
+needed are the key(s), which are expected to be found under the glob
+`/var/qmail/control/dkim/*.key`. The file name without the dot and
+suffix is taken to be the selector name.
+
+There is also a left-over from the old way how the original project
+better-qmail-remote is based on was configured, see the "XML config
+file structure" section.
 
 
 ### Key generation
@@ -173,13 +180,14 @@ provided as utilities for special circumstances.
 
 ## XML config file structure
 
-The original [dkim script from
-qmailtoaster](http://qmailtoaster.com/dkim.tgz) had code to read an
-XML file that configures the DKIM keys to be used. I have left this
-code in, but am not using it myself (instead I'm going with the
-default values, which I have changed slightly), so it's
-untested. Here's some principles I gleaned from it before realizing
-that I don't need it:
+The original
+[dkim script from qmailtoaster](http://qmailtoaster.com/dkim.tgz) had
+code to read an XML file that configures the DKIM keys to be
+used. This code was left in, but the author is not currently using it
+(instead better-qmail-remote prefers a different approach, see
+"Configuration" section above), so it's untested. Here's some
+principles I gleaned from it before the author of this project
+realized that he didn't need it:
 
  - missing settings will be merged from the global-node
 
@@ -202,6 +210,11 @@ that I don't need it:
           <!-- no signing for example2.com -->
           <example2.com />
         </dkimsign>
+
+Also have a look at contents of the file `install.sh`, which is also a
+left-over from the original project. Don't just run it, it will be out
+of date. NOTE: this has not been tested since making the changes to
+the original script. TODO: update or merge/drop install.sh.
 
 
 ## spf-forward script
