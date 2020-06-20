@@ -96,7 +96,11 @@ Activate the wrapper:
 better-qmail-remote tries to use sane defaults, so the only files
 needed are the key(s), which are expected to be found under the glob
 `/var/qmail/control/dkim/*.key`. The file name without the dot and
-suffix is taken to be the selector name.
+suffix is taken to be the selector name. For every key file,
+`qmail-remote` also looks for the following files and if present uses
+their contents (just their first line, usually) instead of the defaults:
+
+    * `$selector.c`: the method, default: `simple`
 
 There is also a left-over from the old way how the original project
 better-qmail-remote is based on was configured, see the "XML config

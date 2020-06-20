@@ -73,6 +73,12 @@ sub xfirst_line {
     $line
 }
 
+sub maybe_first_line {
+    my ($path)= @_;
+    (-e $path) ? xfirst_line $path : undef
+}
+
+
 # enable support for "pretty" signatures, if available
 eval 'require Mail::DKIM::TextWrap';
 
@@ -127,11 +133,14 @@ sub set_config_domain {
 	my ($selector)= $keyfile=~ m{([^/]+)\.key$}s
 	    or die "BUG: can't extract selector from file '$keyfile'";
 	# $selector would e.g. be 'global'.
+	my $keyfile_config_base= $keyfile;
+	$keyfile_config_base=~ s/\.key$//;
+	my $method= maybe_first_line("$keyfile_config_base.c") || 'simple';
 	my $cfg = +{
 	    types     => { dkim => {} },
 	    keyfile   => $keyfile,
 	    algorithm => 'rsa-sha256',
-	    method    => 'simple',
+	    method    => $method,
 	    selector  => $selector,
 	    domain    => $domain
 	};
