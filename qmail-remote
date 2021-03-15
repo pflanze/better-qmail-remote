@@ -230,6 +230,7 @@ $maybe_debugfh->xflush if $maybe_debugfh;
 sub stopit {
     # deliver to 'emergency' local account instead.
     my $maildir= maildir_spambounce_path;
+    warn "msg looks spammy, diverting to local maildir at '$maildir'\n";
     deliver_wholemail_maildir $mailbuf, $maildir, undef, 0644;
     qexit_success;
 }
