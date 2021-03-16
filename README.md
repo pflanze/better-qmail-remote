@@ -94,21 +94,29 @@ Activate the wrapper:
 ## Configuration
 
 better-qmail-remote tries to use sane defaults, so the only files
-needed are the key(s), which are expected to be found under the glob
-`/var/qmail/control/dkim/*.key`. The file name without the dot and
-suffix is taken to be the selector name. For every key file,
-`qmail-remote` also looks for the following files and if present uses
-their contents (just their first line, usually) instead of the defaults:
+needed are:
 
-* `$selector.method.txt`: the 'c' value in the signature, default:
-    `relaxed/relaxed`
-* `$selector.algorithm.txt`: the key algorithm ('a' value in the
-    signature), default: `rsa-sha256`
+* the key(s), which are expected to be found under the glob
+    `/var/qmail/control/dkim/*.key`. The file name without the dot and
+    suffix is taken to be the selector name. For every key file,
+    `qmail-remote` also looks for the following files and if present
+    uses their contents (just their first line, usually) instead of
+    the defaults:
 
-There is also a left-over from the old way how the original project
-better-qmail-remote is based on was configured, see the "XML config
-file structure" section.
+    * `$selector.method.txt`: the 'c' value in the signature, default:
+        `relaxed/relaxed`
+    * `$selector.algorithm.txt`: the key algorithm ('a' value in the
+        signature), default: `rsa-sha256`
 
+    There is also a left-over from the old way how the original project
+    better-qmail-remote is based on was configured, see the "XML config
+    file structure" section.
+
+* the `spamcheck` script, which is installed in
+    `/etc/better-qmail-remote/sbin/` as part of running
+    `setup-debounce`. This script is called with the path to a mail
+    file, and must print at least an `X-Spam-Status:.*score=(\S+)`
+    header.
 
 ### Key generation
 
