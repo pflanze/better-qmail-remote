@@ -93,7 +93,9 @@ my $maybe_debugfh= ($ENV{BETTER_QMAIL_REMOTE__DEBUG} || $debug) ? do {
     for (sort keys %ENV) {
 	$t->xprint("$_=$ENV{$_}\n");
     }
-    qlog "writing debug info to ".$t->path;
+    # use warn not qlog here, as it's in a special context anyway? XX
+    # not fleshed out
+    warn "writing debug info to ".$t->path;
     $t
 } : undef;
 sub Debug {
