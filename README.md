@@ -164,7 +164,8 @@ Maildir, asking for each mail whether it's spam or ham, and uses that
 information to train spamassassin on the original incoming mail. For
 the actual training, it calls program names 'spam' and 'ham' with the
 path as only argument. You need to provide scripts with these names,
-reachable through $PATH. See the examples in [examples/](examples/).
+reachable through $PATH. See the examples in
+[config-template/sbin/](config-template/sbin/).
 
 To set up the backscatter trap, the Maildir at
 `/var/qmail/Maildir_spambounce` needs to be created (currently the
