@@ -280,6 +280,7 @@ eval {
 } || do {
     #qexit_deferral('Error while checking: ', $@)
     # Printing to STDERR is ok, only STDOUT is used for signaling back, right?
+    # ^XXX wrong.
     print STDERR "ignoring exception during spam check: $@";
 };
 
