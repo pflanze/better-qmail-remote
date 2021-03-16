@@ -127,9 +127,20 @@ sub wholemail_spamscore {
 	    $t->xprint($_[0]);
 	    $t->xclose;
 	    my $path= $t->path;
-	    my $in= Chj::IO::Command->new_sender("spamcheck", $path);
+	    my $stderr= Chj::xtmpfile::xtmpfile(
+                "/tmp/better-qmail-remote_spamcheck_stderr_");
+	    my $in= Chj::IO::Command->new_sender(
+                sub{
+                    $stderr->xdup2(2);
+                    exec "spamcheck", $path;
+                });
 	    my $str= $in->xcontent;
-	    $in->xxfinish; # must exit 0 in either case
+            $stderr->xrewind;
+            my $errs= $stderr->xcontent;
+            if (length $errs) {
+                qlog("spamcheck printed to stderr:", $errs);
+            }
+	    $in->xxfinish; # spamcheck must exit 0 in either ham or spam case
 	    if (my ($newscore)= perhaps_wholemail_spamscore $str) {
 		$newscore
 	    } else {
