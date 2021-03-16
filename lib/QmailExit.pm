@@ -1,5 +1,5 @@
 # Copyright (C) 2007 Manuel Mausz (manuel@mausz.at)
-# Copyright (C) 2015 Christian Jaeger (ch at christianjaeger ch)
+# Copyright (C) 2015-2021 Christian Jaeger (ch at christianjaeger ch)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -47,15 +47,15 @@ sub qexit {
 }
 
 sub qexit_deferral {
-    return qexit('Z', @_);
+    qexit('Z', @_);
 }
 
 sub qexit_failure {
-    return qexit('D', @_);
+    qexit('D', @_);
 }
 
 sub qexit_success {
-    return qexit('K', @_);
+    qexit('K', @_);
 }
 
 # XX don't know whether this is correct.
