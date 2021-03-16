@@ -290,7 +290,7 @@ eval {
 # Deliver the message, and add hashcash and the DKIM signature
 
 # execute qmail-remote
-open(QR, '|-') || exec ($qremote, map { untainted ($_) } @ARGV)
+open(QR, '|-') || qexec ($qremote, map { untainted ($_) } @ARGV)
   or qexit_deferral('Unable to run qmail-remote: ', $!);
 
 if (have_hashcash) { # XX add configuration option (instead)?

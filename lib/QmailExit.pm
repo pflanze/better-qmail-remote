@@ -35,6 +35,7 @@ package QmailExit;
 	      qexit_failure
 	      qexit_success
 	      qlog
+	      qexec
 	 );
 @EXPORT_OK=qw();
 %EXPORT_TAGS=(all=>[@EXPORT,@EXPORT_OK]);
@@ -55,6 +56,21 @@ sub printlog {
 
 END {
     printlog;
+}
+
+sub qexec {
+    # save the log before exec. Ugly HACK. Since can't just print it,
+    # and if wanted to run the cmd in a child, would have to collect
+    # and ~parse its output to add our own.
+    if (@log) {
+	require Chj::xtmpfile;
+	my $t= Chj::xtmpfile::xtmpfile ("/tmp/QmailExit_qexec_");
+	$t->xprint(map { "$_\n" } @log);
+	$t->xclose;
+	$t->autoclean(0);
+	@log=();
+    }
+    exec(@_)
 }
 
 
