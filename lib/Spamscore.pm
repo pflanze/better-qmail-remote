@@ -63,6 +63,11 @@ sub mailheadstring_perhaps_headerfirstline ($$) {
 
 sub mailheadstring_perhaps_received_unixtime {
     my ($head)= @_;
+    # Cut out any headers above these. This is since
+    # qmail-remote is being invoked with a message that already has a
+    # new Received header at the top. Remove it to get the last one
+    # before. HACKY.
+    $head=~ s/^.*?(${NL}(?:Return-Path|Delivered-To):)/$1/s;
     if (my ($rcvd)= mailheadstring_perhaps_headerfirstline($head, "Received")) {
 	if (my ($timestr)= $rcvd=~ /^\s*\(qmail.*?\);\s*(.*)/) {
 	    my $t= Date::Parse::str2time $timestr;
