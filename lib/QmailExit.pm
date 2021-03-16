@@ -41,8 +41,16 @@ package QmailExit;
 
 use strict; use warnings FATAL => 'uninitialized';
 
+# Can't print log messages right away, even via stderr, since the
+# qmail system expects qmail-remote to print protocol stuff first
+# only. Delay log message till after the end.
+my @log;
+
 sub qexit {
     print @_, "\0";
+    if (@log) {
+	print join("\n", "", @log), "\0";
+    }
     exit(0);
 }
 
@@ -58,12 +66,10 @@ sub qexit_success {
     qexit('K', @_);
 }
 
-# XX don't know whether this is correct.
 sub qlog {
     my $msg= join(" ", @_);
     chomp $msg;
-    $msg=~ s/\n/\n /sg;
-    print STDERR " $msg\n";
+    push @log, $msg;
 }
 
 1
