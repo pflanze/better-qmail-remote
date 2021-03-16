@@ -234,7 +234,7 @@ sub stopit {
     my ($spamscore, $kind)= @_;
     # deliver to 'emergency' local account instead.
     my $maildir= maildir_spambounce_path;
-    qlog "msg of kind '$kind' looking spammy (score $spamscore), diverting to local maildir at '$maildir'";
+    qlog "msg in case '$kind' treated as likely spam (score $spamscore), diverting to local maildir at '$maildir'";
     deliver_wholemail_maildir $mailbuf, $maildir, undef, 0644;
     qexit_success;
 }
