@@ -5,13 +5,23 @@ IFS=
 
 if [ $# != 1 ]; then
     echo "usage: $0 file"
+    echo "  Exits with code 0 in either case. Exits with code 1 if spamc"
+    echo "  printed 'failed:' to stderr (spamc does exit 0 even on failures)."
     exit 1
 fi
 
 base=$(dirname "$0")
 source "$base"/_spamc.bash
 
+err=$(mktemp)
+
 for f in "$@"; do 
-    _spamc < "$f"
+    _spamc < "$f" 2> "$err"
+    if grep -q failed: "$err"; then
+        cat "$err" >&2
+        rm -f "$err"
+        exit 1
+    fi
+    rm -f "$err"
 done
 
