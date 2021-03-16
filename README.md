@@ -116,7 +116,15 @@ needed are:
     `/etc/better-qmail-remote/sbin/` as part of running
     `setup-debounce`. This script is called with the path to a mail
     file, and must print at least an `X-Spam-Status:.*score=(\S+)`
-    header.
+    header. You need to make sure that the socketdir path in
+    [_spamc.bash](config-template/sbin/_spamc.bash) is accessible to
+    the `qmailr` user. Note that Qmail forgoes the system user
+    database, hence adding `qmailr` to a group will have no effect on
+    permissions. The suggestion is to create
+    `/var/qmail/spamd-socket-for-qmailr` owned by the `spamd` user and
+    the `qmail` group, with `-rwxr-x---` (750) permissions (`qmailr`
+    runs with the `qmail` group), and then configure spamd to use that
+    directory.
 
 ### Key generation
 
