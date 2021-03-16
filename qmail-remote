@@ -274,8 +274,13 @@ eval {
 		stopit $spamscore, "non-bounce";
 	    }
 	} else {
-	    # no problem, deliver it (now only reached if spamcheck
-	    # fails; but it's a locally generated mail, fine?)
+	    # Now only reached if spamcheck fails; it's a locally
+	    # generated mail, should it be delivered? No, be
+	    # consistent and refuse to send any unchecked mails.  (OK,
+	    # *could* fall back to try to get the *old* spam headers
+	    # and check *those* for spamscore, in wholemail_spamscore,
+	    # and trust those. But, prefer simplicity?)
+	    stopit "n.A.", "spamcheck failed";
 	}
     }
     1
