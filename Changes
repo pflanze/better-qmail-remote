@@ -1,3 +1,26 @@
+v0.3.9
+
+    qmail-remote now, instead of just trusting embedded spam score
+    headers, sends outgoing mails for a re-check if it's older than 30
+    seconds. Also, mails without spam check header will be
+    checked. Sadly, this needs access to spamd by the qmail group.
+
+v0.3.8pre3
+
+    Prepare for implementing EdDSA, but can't go forward with it (see
+    Github issue).
+
+
+v0.3.1 .. v0.3.7
+
+    Various small fixes.
+
+v0.3
+
+    - don't deliver bounces without an X-Spam-Status header
+    - add spf-forward
+    - README improvements
+
 v0.2
 
     use domain from sender (Return-Path), not the smtpd domain
