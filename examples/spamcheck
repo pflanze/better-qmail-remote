@@ -1,0 +1,15 @@
+#!/bin/bash
+
+set -euo pipefail
+IFS=
+
+if [ $# != 1 ]; then
+    echo "usage: $0 file"
+    exit 1
+fi
+
+for f in "$@"; do 
+    # adapt the socket path here:
+    spamc --socket ~spamd/spamd/socket -s 10500000 < "$f"
+done
+
