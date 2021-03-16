@@ -47,10 +47,12 @@ use strict; use warnings FATAL => 'uninitialized';
 my @log;
 
 sub qexit {
-    print @_, "\0";
+    print @_;
     if (@log) {
-	print join("\n", "", @log), "\0";
+	print join("\n", "", "Note:", @log);
     }
+    print "\0";
+    # Qmail stops copying output after the null byte.
     exit(0);
 }
 
