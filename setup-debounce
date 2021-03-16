@@ -90,6 +90,12 @@ sub do_setup_config {
     if (! -e "/etc/better-qmail-remote") {
 	System "cp", "-r", "$mydir/config-template", "/etc/better-qmail-remote";
     }
+    # This is giving access to the socket listed in the `spamcheck`
+    # script. This action assumes that you're using that script, with
+    # the `spamd` group giving access to the spam checking. Also yes,
+    # this is sadly giving write (learn) access to spamd, too. TODO
+    # look into improving this.
+    System qw(adduser qmailr spamd);
 }
 
 
