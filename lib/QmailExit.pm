@@ -46,11 +46,21 @@ use strict; use warnings FATAL => 'uninitialized';
 # only. Delay log message till after the end.
 my @log;
 
-sub qexit {
-    print @_;
+sub printlog {
     if (@log) {
 	print join("\n", "", "Note:", @log);
+	@log=();
     }
+}
+
+END {
+    printlog;
+}
+
+
+sub qexit {
+    print @_;
+    printlog;
     print "\0";
     # Qmail stops copying output after the null byte.
     exit(0);
