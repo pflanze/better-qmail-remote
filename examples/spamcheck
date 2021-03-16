@@ -8,8 +8,10 @@ if [ $# != 1 ]; then
     exit 1
 fi
 
+base=$(dirname "$0")
+source "$base"/_spamc.bash
+
 for f in "$@"; do 
-    # adapt the socket path here:
-    spamc --socket ~spamd/spamd/socket -s 10500000 < "$f"
+    _spamc < "$f"
 done
 

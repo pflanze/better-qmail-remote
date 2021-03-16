@@ -6,12 +6,14 @@ IFS=
 spamham="$1"
 shift
 
+base=$(dirname "$0")
+source "$base"/_spamc.bash
+
 echo "Learning as $spamham:"
 
 for f in "$@"; do 
     echo -n "$f: "
-    # adapt the socket path here:
-    cat "$f" | spamc --socket ~spamd/spamd/socket -s 2500000 -L "$spamham"
+    cat "$f" | _spamc -L "$spamham"
 done
 
 echo Ok.
