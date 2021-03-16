@@ -280,13 +280,15 @@ eval {
 	    # *could* fall back to try to get the *old* spam headers
 	    # and check *those* for spamscore, in wholemail_spamscore,
 	    # and trust those. But, prefer simplicity?)
-	    stopit "n.A.", "spamcheck failed";
+	    #stopit "n.A.", "spamcheck failed";
+            # Or, better, give a temporary failure:
+            qexit_deferral("spamcheck failure");
 	}
     }
     1
 } || do {
-    #qexit_deferral('Error while checking: ', $@)
-    qlog "ignoring exception during spam check: $@";
+    qexit_deferral('Error while checking: ', $@)
+    # qlog "ignoring exception during spam check: $@";
 };
 
 
