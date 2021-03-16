@@ -1,7 +1,7 @@
 #!/usr/bin/perl -T
 #
 # Copyright (C) 2007 Manuel Mausz (manuel@mausz.at)
-# Copyright (C) 2015-2020 Christian Jaeger (ch at christianjaeger ch)
+# Copyright (C) 2015-2021 Christian Jaeger (ch at christianjaeger ch)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -228,9 +228,10 @@ $maybe_debugfh->xflush if $maybe_debugfh;
 # Can't do this earlier since we had to read $mailbuf first.
 
 sub stopit {
+    my ($spamscore, $kind)= @_;
     # deliver to 'emergency' local account instead.
     my $maildir= maildir_spambounce_path;
-    warn "msg looks spammy, diverting to local maildir at '$maildir'\n";
+    warn "$0: msg of kind '$kind' looking spammy (score $spamscore), diverting to local maildir at '$maildir'\n";
     deliver_wholemail_maildir $mailbuf, $maildir, undef, 0644;
     qexit_success;
 }
@@ -240,10 +241,10 @@ eval {
 	warn "not sure how comes that we're trying to send a doublebounce";
 	# should be impossible, qmail doesn't send double bounces
     } elsif (my ($return,$orig)= perhaps_wholemail_bounce $mailbuf) {
-	if (my ($spamscore)= perhaps_wholemail_spamscore $orig) {
+	if (my ($spamscore)= wholemail_spamscore $orig) {
 	    # likely spam to a non-existing address.
 	    if ($spamscore >= 0.5) {
-		stopit;
+		stopit $spamscore, "bounce";
 	    }
 	} else {
 	    # The original part is missing the spamscore; this happens
@@ -253,7 +254,7 @@ eval {
 	    # increase it!); or if spamd was not running.  To avoid
 	    # any chance of sending out spam as backscatter, do not
 	    # deliver it.
-	    stopit;
+	    stopit $spamscore, "spamcheck failure";
 	}
     } else {
 	# not a bounce. still check spamscore, even though normal
@@ -265,12 +266,13 @@ eval {
 	# to the mailing list archive, and there are as many
 	# duplicates of the mail landing in the Maildir_spambounce as
 	# there are subscribers), but better be safe.
-	if (my ($spamscore)= perhaps_wholemail_spamscore $mailbuf) {
+	if (my ($spamscore)= wholemail_spamscore $mailbuf) {
 	    if ($spamscore > 1) {
-		stopit;
+		stopit $spamscore, "non-bounce";
 	    }
 	} else {
-	    # no problem, deliver it
+	    # no problem, deliver it (now only reached if spamcheck
+	    # fails; but it's a locally generated mail, fine?)
 	}
     }
     1
