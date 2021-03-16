@@ -98,9 +98,22 @@ sub perhaps_wholemail_spamscore ($) {
 }
 
 sub wholemail_spamscore {
-    # "Take spam score from `spamcheck` script. If spamcheck fails,
+    # "Take spam score from header if present and recently delivered;
+    #  from `spamcheck` script instead otherwise. If spamcheck fails,
     #  return nothing."
+    my $head= mailstring_xhead $_[0];
 
+    if (my ($received_t)= mailheadstring_perhaps_received_unixtime $head) {
+	if (abs(time - $received_t) < 30) {
+	    # There probably was no time to manually tag mail
+	    # (probably this is an auto-forwarding), thus assume that
+	    # the score didn't change.
+	    if (my ($spamscore)= perhaps_mailheadstring_spamscore $head) {
+		return $spamscore;
+	    }
+	}
+    }
+    # Fall back to running spamcheck and parsing *its* output.
     my $res;
     eval {
 	$res= do {
