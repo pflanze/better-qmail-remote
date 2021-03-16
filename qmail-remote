@@ -93,7 +93,7 @@ my $maybe_debugfh= ($ENV{BETTER_QMAIL_REMOTE__DEBUG} || $debug) ? do {
     for (sort keys %ENV) {
 	$t->xprint("$_=$ENV{$_}\n");
     }
-    warn "writing debug info to ".$t->path;
+    qlog "writing debug info to ".$t->path;
     $t
 } : undef;
 sub Debug {
@@ -232,14 +232,14 @@ sub stopit {
     my ($spamscore, $kind)= @_;
     # deliver to 'emergency' local account instead.
     my $maildir= maildir_spambounce_path;
-    warn "$0: msg of kind '$kind' looking spammy (score $spamscore), diverting to local maildir at '$maildir'\n";
+    qlog "msg of kind '$kind' looking spammy (score $spamscore), diverting to local maildir at '$maildir'";
     deliver_wholemail_maildir $mailbuf, $maildir, undef, 0644;
     qexit_success;
 }
 
 eval {
     if (my ($to_whom,$return_and_orig)= perhaps_wholemail_doublebounce $mailbuf) {
-	warn "not sure how comes that we're trying to send a doublebounce";
+	qlog "not sure how comes that we're trying to send a doublebounce";
 	# should be impossible, qmail doesn't send double bounces
     } elsif (my ($return,$orig)= perhaps_wholemail_bounce $mailbuf) {
 	if (my ($spamscore)= wholemail_spamscore $orig) {

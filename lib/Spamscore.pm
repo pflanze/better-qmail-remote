@@ -34,6 +34,7 @@ package Spamscore;
 
 use Date::Parse;  # always load, to avoid surprises, ok?
 use Chj::IO::Command;  # is always loaded by HashCash.pm anyway
+use QmailExit qw(qlog);
 
 
 sub xcontentref {
@@ -68,15 +69,15 @@ sub mailheadstring_perhaps_received_unixtime {
 	    if (defined $t) {
 		$t
 	    } else {
-		warn "got invalid date string from qmail??: '$timestr'";
+		qlog "got invalid date string from qmail??: '$timestr'";
 		()
 	    }
 	} else {
-	    warn "expected Received value from qmail, got: '$rcvd'";
+	    qlog "expected Received value from qmail, got: '$rcvd'";
 	    ()
 	}
     } else {
-	# warn "missing 'Received' header"--no, newly generated
+	# qlog "missing 'Received' header"--no, newly generated
 	# messages don't have one.
 	()
     }
@@ -127,14 +128,14 @@ sub wholemail_spamscore {
 	    if (my ($newscore)= perhaps_wholemail_spamscore $str) {
 		$newscore
 	    } else {
-		warn "'spamcheck' script did not print an X-Spam-Status header";
+		qlog "'spamcheck' script did not print an X-Spam-Status header";
 		# Visibly but safely break: assume it's spam (thus diverted to local).
 		10
 	    }
 	};
 	1
     } || do {
-	warn "$0: wholemail_spamscore: exception: $@";
+	qlog "wholemail_spamscore: exception: $@";
 	()
     }
 }
