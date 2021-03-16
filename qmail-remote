@@ -39,7 +39,8 @@ my ($host, $sender, @recip)= @ARGV;
 # use safe PATH setting:  XX make configurable?
 $ENV{PATH}=
   join(":",
-       qw(/usr/local/sbin
+       qw(/etc/better-qmail-remote/sbin
+          /usr/local/sbin
 	  /usr/local/bin
 	  /usr/sbin
 	  /usr/bin
