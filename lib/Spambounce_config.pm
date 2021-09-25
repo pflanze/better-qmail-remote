@@ -1,4 +1,4 @@
-# Copyright (C) 2015 Christian Jaeger (ch at christianjaeger ch)
+# Copyright (C) 2015-2021 Christian Jaeger (ch at christianjaeger ch)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
