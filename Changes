@@ -1,3 +1,12 @@
+v0.3.10
+
+    Clarify licensing. Since the original code base was
+    GPL-2-or-later, everything is the same, although I would be happy
+    with providing my own code under other licenses, too (and perhaps
+    Manuel Mausz, the original author, would be happy to re-license
+    his parts, too). Let me know if interested.
+
+
 v0.3.9
 
     qmail-remote now, instead of just trusting embedded spam score
