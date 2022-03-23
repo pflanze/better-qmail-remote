@@ -1,0 +1,46 @@
+#!/bin/bash
+
+set -euo pipefail
+IFS=
+
+usage () {
+    echo "Usage: $0 mailfile(s)"
+    echo "  Unpack the original mail that caused a double bounce;"
+    echo "  this might be a bounce from (the local?) qmail, or"
+    echo "  it might be a bounce delivered by another mail server,"
+    echo "  in the former case it will also strip the original"
+    echo "  bounce wrapper."
+    exit 1
+}
+
+if [ $# -eq 0 ]; then
+    usage
+fi
+
+error=0
+
+for path in "$@"; do
+
+    fn=$(basename "$path")
+    base=$(dirname "$path")
+
+    fn2=$(perl -we '
+	    my ($a,$b,@r)= split /\./, $ARGV[0];
+	    @r or die "missing dots";
+	    print join(".", $a, "$b-unpacked", @r),"\n"'  "$fn")
+
+    outpath=$(echo "$base/$fn2")
+
+    if [ -e "$outpath" ]; then
+	echo "out path '$outpath' already exists" >&2
+	error=1
+    else
+	CONTINUE=1 /opt/better-qmail-remote/bin/doublebounce-original "$path" "$outpath" \
+	    || {
+	    error=1
+	}
+    fi
+
+done
+
+exit "$error"
