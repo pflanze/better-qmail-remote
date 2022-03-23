@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# Copyright (C) 2015-2021 Christian Jaeger (ch at christianjaeger ch)
+# Copyright (C) 2015-2022 Christian Jaeger (ch at christianjaeger ch)
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -38,6 +38,7 @@ use Spamscore qw(xcontentref
 		 perhaps_wholemail_doublebounce);
 use Chj::xtmpfile;
 
+my $continue = (($ENV{CONTINUE}//"") eq "1");
 
 my $ctx=
   $myorigname eq "bounce-original" ?
@@ -49,7 +50,15 @@ my $ctx=
   $myorigname eq "doublebounce-original" ?
   +{
     kindtext=> "double bounce",
-    extract=> \&perhaps_wholemail_doublebounce,
+    extract=> $continue ? sub {
+	my ($sref)= @_;
+	my ($_ignore, $orig)= perhaps_wholemail_doublebounce($sref);
+	if (my ($_ignore2, $orig2) = perhaps_wholemail_bounce($orig)) {
+	    ($_ignore2, $orig2)
+	} else {
+	    ($_ignore, $orig)
+	}
+    } : \&perhaps_wholemail_doublebounce,
    }
   : die "??";
 
@@ -57,7 +66,11 @@ my $ctx=
 @ARGV==1 or @ARGV==2
   or die "usage: $myorigname inpath [outpath]
   strip $$ctx{kindtext} 'header' from mail at inpath.
-  print to outpath or STDOUT.\n";
+  print to outpath or STDOUT.
+  If CONTINUE=1, and called as doublebounce-original, also
+  tries to unpack 1 step further (succeeds if qmail, i.e. usually
+  it's us).
+";
 
 my ($inpath, $maybe_outpath)=@ARGV;
 
