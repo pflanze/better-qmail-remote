@@ -124,6 +124,57 @@ my $qremote=
   : '/var/qmail/bin/qmail-remote.orig';
 my $binary= 0;
 
+# ----------------------------------------------------------------------
+
+# Refuse delivery when the MX of $host (or $host itself, if it has no
+# MX) is a null MX, or resolves only to loopback addresses: delivering
+# there hands the message to the local smtpd, which may queue it for
+# $host again, so it loops. DNS trouble falls through to
+# qmail-remote.orig, which handles it.
+
+sub is_routed_by_smtproutes {
+    my ($host)= @_;
+    open my $fh, '<', '/var/qmail/control/smtproutes' or return 0;
+    while (<$fh>) {
+	my ($domain)= /^([^:]*):/ or next;
+	$domain= lc $domain;
+	return 1 if ($domain eq '' or $domain eq $host
+		     or ($domain=~ /^\./ and substr($host, -length $domain) eq $domain));
+    }
+    0
+}
+
+sub check_mx_not_loopback {
+    my ($host)= @_;
+    $host= lc $host;
+    return if is_routed_by_smtproutes $host;
+    require Net::DNS;
+    my $res= Net::DNS::Resolver->new;
+    my @targets;
+    if (my $reply= $res->query($host, 'MX')) {
+	@targets= map { $_->exchange } grep { $_->type eq 'MX' } $reply->answer;
+	qexit_failure("Sorry, $host has a null MX and does not accept mail. (#5.1.10)")
+	  if (@targets and !grep { $_ ne '' and $_ ne '.' } @targets);
+    }
+    @targets= ($host) unless @targets;
+    my @addrs;
+    for my $target (@targets) {
+	if ($target=~ /^\d+\.\d+\.\d+\.\d+\z/ or $target=~ /:/) {
+	    push @addrs, $target;
+	    next;
+	}
+	for my $type (qw(A AAAA)) {
+	    my $reply= $res->query($target, $type) or next;
+	    push @addrs, map { $_->address } grep { $_->type eq $type } $reply->answer;
+	}
+    }
+    qexit_failure("Sorry, the MX for $host points to loopback, ",
+		  "so delivering there would loop. (#5.4.6)")
+      if (@addrs and !grep { !(/^127\./ or $_ eq '::1') } @addrs);
+}
+
+check_mx_not_loopback $host;
+
 our $config;
 
 sub set_config_domain {

@@ -12,6 +12,10 @@ following jobs:
    spamassassin headers with high-ish scores locally (it also checks
    non-bounces using a separate score)
 
+ - refuse (permanently) to deliver to domains with a null MX, or
+   whose MX resolves only to loopback, which would otherwise hand
+   the mail back to the local smtpd and could loop
+
 It being a wrapper written in Perl (with tainting checks on) means
 that there is no need to patch Qmail, i.e. it works with the `qmail`
 package from Debian (which is actually
@@ -70,6 +74,7 @@ better-qmail-remote):
 Install dependencies:
 
     apt-get install libmail-dkim-perl  # or: cpan -i Mail::DKIM
+    apt-get install libnet-dns-perl    # or: cpan -i Net::DNS
 
 Install hashcash if you'd like to use it (it will automatically be
 used when accessible from $PATH):
