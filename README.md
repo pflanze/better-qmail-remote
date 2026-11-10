@@ -108,6 +108,43 @@ needed are:
     * `$selector.algorithm.txt`: the key algorithm ('a' value in the
         signature), default: `rsa-sha256`
 
+    Messages are signed for the domain of their From header (the
+    domain DMARC checks), and only if that domain is one of ours:
+    listed in `/var/qmail/control/virtualdomains` (an entry
+    `.example.com` covers all subdomains of example.com, single
+    address entries don't count) or `/var/qmail/control/locals`.
+    Messages that came in from outside and are being sent on again
+    (forwards, mailing lists) are recognized by the
+    `Authentication-Results` header our smtpd added on receipt (its
+    authserv-id is taken from `/var/qmail/control/dkim/authserv-id.txt`
+    if present, else from `/var/qmail/control/me`). If their From
+    domain is ours, they are only signed if that header recorded a
+    DMARC pass for it, or a DMARC result for a different domain (the
+    From header was changed after receipt, like mailing list managers
+    do); otherwise they could be forgeries of our domains. This relies
+    on the smtpd renaming incoming `Authentication-Results` headers
+    that claim our authserv-id, as RFC 8601 requires.
+    `BETTER_QMAIL_REMOTE__CONTROLDIR` overrides `/var/qmail/control`.
+
+* optionally, an ARC key, to ARC seal ([RFC
+    8617](https://www.rfc-editor.org/rfc/rfc8617)) messages that came
+    in from outside and are being sent on again (forwards, mailing
+    lists), so the receiver can see the authentication results our
+    smtpd got on receipt even when SPF, DKIM and DMARC fail after
+    forwarding. The key is the first `/var/qmail/control/arc/*.key`
+    file; its name without `.key` is the selector, and
+    `$selector.domain.txt` holds the signing domain (d=), which
+    identifies us as the sealer and doesn't need to match the From
+    domain. Only `rsa-sha256` is supported. The chain validation
+    result (cv=) is taken from an `arc=` result in our
+    `Authentication-Results` header: without one, a message without
+    ARC headers is sealed with cv=none, and one that already has ARC
+    headers isn't sealed. A message whose most recent ARC-Seal already
+    says cv=fail isn't sealed either. Sealing comes after adding
+    hashcash and DKIM signatures, and the ARC-Message-Signature covers
+    the DKIM signatures. If sealing fails, the message is delivered
+    unsealed.
+
     There is also a left-over from the old way how the original project
     better-qmail-remote is based on was configured, see the "XML config
     file structure" section.

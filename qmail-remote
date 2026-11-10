@@ -54,6 +54,9 @@ my $debug=0;
 use Mail::DKIM 0.29;
 use Mail::DKIM::Signer;
 use MySignerPolicy;
+use SigningDomain qw(read_hosted_domains dkim_signing_domain header_fields
+		     our_auth_results received_from_outside);
+use ArcSeal qw(read_arc_config arc_seal);
 use ConfigMerge qw(config_merge);
 use QmailExit ":all";
 use HashCash qw(have_hashcash mint_hashcash);
@@ -124,11 +127,16 @@ my $qremote=
   : '/var/qmail/bin/qmail-remote.orig';
 my $binary= 0;
 
-our $config;
+my $controldir=
+  $ENV{BETTER_QMAIL_REMOTE__CONTROLDIR} ?
+  untainted($ENV{BETTER_QMAIL_REMOTE__CONTROLDIR})
+  : '/var/qmail/control';
+my $keydir= $ENV{BETTER_QMAIL_REMOTE__KEYDIR} || "$controldir/dkim";
+
+our $config= {};
 
 sub set_config_domain {
     my ($domain)=@_;
-    my $keydir= $ENV{BETTER_QMAIL_REMOTE__KEYDIR} || '/var/qmail/control/dkim';
     # Loop through all available .key files, add as corresponding
     # selector, implementing
     # https://github.com/pflanze/better-qmail-remote/issues/1 :
@@ -155,18 +163,46 @@ sub set_config_domain {
     }
 }
 
-set_config_domain ( $sender=~ m{[^@]+\@([^/]+)}s ? $1
-		    : xfirst_line('/var/qmail/control/me') );
-# XXX: this allows *any* from address domain and will sign it!
+# ----------------------------------------------------------------------
 
-lock_hash %$config;
+# Read the message
+
+my $mailbuf = '';
+
+eval {
+    if ($binary) {
+	binmode STDIN;
+    }
+    local $/;
+    $mailbuf= <STDIN> // '';
+    1
+} || do {
+    qexit_deferral('Error while reading the message: ', $@)
+};
 
 # ----------------------------------------------------------------------
 
 # Create DKIM signature
 
+# the authserv-id of the Authentication-Results headers our smtpd adds
+my $authserv_id= maybe_first_line("$keydir/authserv-id.txt")
+  || xfirst_line("$controldir/me");
+
+# Only sign for the From domain, and only if we host it (see
+# lib/SigningDomain.pm); signing other domains' mail with our keys makes
+# it fail DKIM, and DMARC, at the receiving end.
+my ($dkim_domain, $dkim_reason)=
+  dkim_signing_domain($mailbuf, read_hosted_domains($controldir),
+		      $authserv_id);
+Debug("DKIM signing domain: ", $dkim_domain // "none",
+      " ($dkim_reason)");
+
+set_config_domain $dkim_domain if defined $dkim_domain;
+
+lock_hash %$config;
+
 # read config file. safely
-if (defined $configfile and -r $configfile) {
+if (defined $dkim_domain and defined $configfile and -r $configfile) {
     eval 'use XML::Simple; 1' and do {
 	my $xmlconf;
 	eval {
@@ -183,35 +219,32 @@ if (defined $configfile and -r $configfile) {
 
 # generate signatures
 my $dkim;
-my $mailbuf = '';
 
-eval {
-    $dkim =
-	Mail::DKIM::Signer->new(
-	    Policy => MySignerPolicy->new($config,
-					  $maybe_debugfh ? \&Debug : undef),
-	    Debug_Canonicalization => $maybe_debugfh
-	);
+if (defined $dkim_domain) {
+    eval {
+	$dkim =
+	    Mail::DKIM::Signer->new(
+		Policy => MySignerPolicy->new($config,
+					      $maybe_debugfh ? \&Debug : undef),
+		Debug_Canonicalization => $maybe_debugfh
+	    );
 
-    if ($binary) {
-	binmode STDIN;
-    }
-
-    while (<STDIN>) {
-	$mailbuf .= $_;
-	unless ($binary)
-	{
-	    chomp $_;
-	    s/\015?$/\015\012/s;
+	for (split /(?<=\n)/, $mailbuf) {
+	    my $line= $_;
+	    unless ($binary)
+	    {
+		chomp $line;
+		$line=~ s/\015?$/\015\012/s;
+	    }
+	    $dkim->PRINT($line);
 	}
-	$dkim->PRINT($_);
-    }
-    $dkim->CLOSE();
+	$dkim->CLOSE();
 
-    1
-} || do {
-    qexit_deferral('Error while signing: ', $@)
-};
+	1
+    } || do {
+	qexit_deferral('Error while signing: ', $@)
+    };
+}
 
 
 $maybe_debugfh->xflush if $maybe_debugfh;
@@ -294,19 +327,16 @@ eval {
 
 # ----------------------------------------------------------------------
 
-# Deliver the message, and add hashcash and the DKIM signature
+# Deliver the message, with hashcash, the DKIM signature and the ARC set
 
-# execute qmail-remote
-open(QR, '|-') || qexec ($qremote, map { untainted ($_) } @ARGV)
-  or qexit_deferral('Unable to run qmail-remote: ', $!);
+# the header fields we add, before the ARC set
+my $added= '';
 
 if (have_hashcash) { # XX add configuration option (instead)?
     my $bits= 23; # XX configuration option, too.
     for my $recip (@recip) {
 	eval {
-	    my $c= mint_hashcash $bits, $recip;
-	    print QR $c
-	      or qexit_deferral ('Printing to qmail-remote: ', $!);
+	    $added.= mint_hashcash $bits, $recip;
 	    1
 	} or qlog "$@";
     }
@@ -314,12 +344,49 @@ if (have_hashcash) { # XX add configuration option (instead)?
     Debug ("don't have hashcash");
 }
 
-for my $dkim_signature ($dkim->signatures) {
+for my $dkim_signature ($dkim ? $dkim->signatures : ()) {
     my $sig = $dkim_signature->as_string;
     $sig =~ s/\015\012\t/\012\t/g;
-    print QR $sig."\012"
+    $added.= $sig."\012";
+}
+
+# ARC seal mail that came in from outside and is being sent on again
+# (forwards, mailing lists), if a key is configured (see lib/ArcSeal.pm).
+# This comes last, as all other changes to the message must be made
+# before sealing (RFC 8617, section 5.1). If sealing fails, the message
+# is still delivered, just unsealed.
+
+my $arc_headers;
+if (received_from_outside(our_auth_results([header_fields $mailbuf],
+					    $authserv_id))) {
+    eval {
+	if (my $arc= read_arc_config("$controldir/arc")) {
+	    my $reason;
+	    ($arc_headers, $reason)=
+	      arc_seal($added . $mailbuf, $arc, $authserv_id);
+	    Debug("ARC: $reason");
+	} else {
+	    Debug("ARC: no key configured");
+	}
+	1
+    } || do {
+	Debug("ARC sealing failed: $@");
+	$arc_headers= undef;
+    };
+}
+
+$maybe_debugfh->xflush if $maybe_debugfh;
+
+# execute qmail-remote
+open(QR, '|-') || qexec ($qremote, map { untainted ($_) } @ARGV)
+  or qexit_deferral('Unable to run qmail-remote: ', $!);
+
+for my $arc_header (@{$arc_headers || []}) {
+    print QR $arc_header."\012"
 	or qexit_deferral ('Printing to qmail-remote: ', $!);
 }
+
+print QR $added or qexit_deferral ('Printing to qmail-remote: ', $!);
 
 print QR $mailbuf or qexit_deferral ('Printing to qmail-remote: ', $!);
 
