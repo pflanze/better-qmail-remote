@@ -246,30 +246,6 @@ if (defined $dkim_domain) {
     };
 }
 
-# ----------------------------------------------------------------------
-
-# ARC seal mail that came in from outside and is being sent on again
-# (forwards, mailing lists), if a key is configured (see lib/ArcSeal.pm).
-# If sealing fails, the message is still delivered, just unsealed.
-
-my $arc_headers;
-if (received_from_outside(our_auth_results([header_fields $mailbuf],
-					    $authserv_id))) {
-    eval {
-	if (my $arc= read_arc_config("$controldir/arc")) {
-	    my $reason;
-	    ($arc_headers, $reason)= arc_seal($mailbuf, $arc, $authserv_id);
-	    Debug("ARC: $reason");
-	} else {
-	    Debug("ARC: no key configured");
-	}
-	1
-    } || do {
-	Debug("ARC sealing failed: $@");
-	$arc_headers= undef;
-    };
-}
-
 
 $maybe_debugfh->xflush if $maybe_debugfh;
 
@@ -351,19 +327,16 @@ eval {
 
 # ----------------------------------------------------------------------
 
-# Deliver the message, and add hashcash and the DKIM signature
+# Deliver the message, with hashcash, the DKIM signature and the ARC set
 
-# execute qmail-remote
-open(QR, '|-') || qexec ($qremote, map { untainted ($_) } @ARGV)
-  or qexit_deferral('Unable to run qmail-remote: ', $!);
+# the header fields we add, before the ARC set
+my $added= '';
 
 if (have_hashcash) { # XX add configuration option (instead)?
     my $bits= 23; # XX configuration option, too.
     for my $recip (@recip) {
 	eval {
-	    my $c= mint_hashcash $bits, $recip;
-	    print QR $c
-	      or qexit_deferral ('Printing to qmail-remote: ', $!);
+	    $added.= mint_hashcash $bits, $recip;
 	    1
 	} or qlog "$@";
     }
@@ -371,17 +344,49 @@ if (have_hashcash) { # XX add configuration option (instead)?
     Debug ("don't have hashcash");
 }
 
+for my $dkim_signature ($dkim ? $dkim->signatures : ()) {
+    my $sig = $dkim_signature->as_string;
+    $sig =~ s/\015\012\t/\012\t/g;
+    $added.= $sig."\012";
+}
+
+# ARC seal mail that came in from outside and is being sent on again
+# (forwards, mailing lists), if a key is configured (see lib/ArcSeal.pm).
+# This comes last, as all other changes to the message must be made
+# before sealing (RFC 8617, section 5.1). If sealing fails, the message
+# is still delivered, just unsealed.
+
+my $arc_headers;
+if (received_from_outside(our_auth_results([header_fields $mailbuf],
+					    $authserv_id))) {
+    eval {
+	if (my $arc= read_arc_config("$controldir/arc")) {
+	    my $reason;
+	    ($arc_headers, $reason)=
+	      arc_seal($added . $mailbuf, $arc, $authserv_id);
+	    Debug("ARC: $reason");
+	} else {
+	    Debug("ARC: no key configured");
+	}
+	1
+    } || do {
+	Debug("ARC sealing failed: $@");
+	$arc_headers= undef;
+    };
+}
+
+$maybe_debugfh->xflush if $maybe_debugfh;
+
+# execute qmail-remote
+open(QR, '|-') || qexec ($qremote, map { untainted ($_) } @ARGV)
+  or qexit_deferral('Unable to run qmail-remote: ', $!);
+
 for my $arc_header (@{$arc_headers || []}) {
     print QR $arc_header."\012"
 	or qexit_deferral ('Printing to qmail-remote: ', $!);
 }
 
-for my $dkim_signature ($dkim ? $dkim->signatures : ()) {
-    my $sig = $dkim_signature->as_string;
-    $sig =~ s/\015\012\t/\012\t/g;
-    print QR $sig."\012"
-	or qexit_deferral ('Printing to qmail-remote: ', $!);
-}
+print QR $added or qexit_deferral ('Printing to qmail-remote: ', $!);
 
 print QR $mailbuf or qexit_deferral ('Printing to qmail-remote: ', $!);
 

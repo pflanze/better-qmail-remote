@@ -100,6 +100,33 @@ like($$headers[0] // '', qr/\bi=2;.*\bcv=pass;/s, "ARC-Seal i=2, cv=pass");
 is(verify(join("", map { "$_\n" } @{$headers || []}) . $hop2), 'pass',
    "the verifier accepts the chain of two");
 
+# a chain that failed validation here is sealed with cv=fail (RFC 8617,
+# section 5.1.2), and then not sealed again (section 5.1, step 2)
+my $failed_hop= "Authentication-Results: $me2; auth=none; arc=fail; spf=fail smtp.mailfrom=example.org\n"
+    . $sealed;
+($headers, $reason)= arc_seal($failed_hop, $arc, $me2);
+like($$headers[0] // '', qr/\bi=2;.*\bcv=fail;/s, "arc=fail: sealed with cv=fail ($reason)");
+my $me3= 'mx.example.org';
+my $hop3= "Authentication-Results: $me3; auth=none; arc=fail\n"
+    . join("", map { "$_\n" } @{$headers || []}) . $failed_hop;
+($headers, $reason)= arc_seal($hop3, $arc, $me3);
+is($headers, undef, "most recent seal has cv=fail: not sealed ($reason)");
+
+# DKIM signatures are covered by the ARC-Message-Signature (section 4.1.2)
+my $signed= "DKIM-Signature: v=1; a=rsa-sha256; d=example.org; s=x; h=from;\n"
+    . "  bh=x; b=x\n" . $message;
+($headers, $reason)= arc_seal($signed, $arc, $me);
+my ($h)= ($$headers[1] // '')=~ /\bh=([^;]*)/;
+like(($h // '')=~ s/\s+//gr, qr/(^|:)dkim-signature(:|$)/i,
+     "ARC-Message-Signature covers DKIM-Signature");
+unlike(($h // '')=~ s/\s+//gr, qr/authentication-results|arc-/i,
+       "but not Authentication-Results or ARC header fields");
+is(verify(join("", map { "$_\n" } @{$headers || []}) . $signed), 'pass',
+   "and verifies");
+(my $dkim_changed= join("", map { "$_\n" } @{$headers || []}) . $signed)
+    =~ s/bh=x; b=x/bh=y; b=y/;
+is(verify($dkim_changed), 'fail', "but not once the DKIM-Signature is changed");
+
 # without our header
 ($headers, $reason)= arc_seal("From: someone\@example.org\n\nbody\n", $arc, $me);
 is($headers, undef, "no header of ours: not sealed ($reason)");

@@ -43,7 +43,14 @@ doesn't have to be the From domain: it identifies us as the sealer.
 The chain validation result (cv=) is taken from an `arc=` result in our
 Authentication-Results header, so our smtpd needs to verify incoming ARC
 chains. Without one, a message without ARC headers is sealed with
-cv=none, and a message that already has ARC headers isn't sealed.
+cv=none, and a message that already has ARC headers isn't sealed. A
+message whose most recent ARC-Seal already says cv=fail isn't sealed
+either (RFC 8617, section 5.1, step 2).
+
+Seal the message as it will be sent: all other changes, such as adding
+DKIM signatures, must be made before sealing (section 5.1, step 1). The
+ARC-Message-Signature covers the DKIM-Signature header fields, as
+section 4.1.2 recommends.
 
 =cut
 
@@ -79,8 +86,28 @@ sub read_arc_config {
 # Returns ($headers, $reason): the ARC set to prepend to the message, as
 # header fields with LF line endings and no final newline, or undef and
 # why the message wasn't sealed.
+# The chain validation status in the most recent ARC-Seal, or undef if
+# there is none.
+sub latest_seal_cv {
+    my ($mailbuf)= @_;
+    my ($head)= $mailbuf=~ /\A(.*?)(?:\r?\n\r?\n|\z)/s;
+    my ($latest, $cv)= (0, undef);
+    while ($head=~ /^ARC-Seal[ \t]*:((?:[^\n]*)(?:\n[ \t][^\n]*)*)/mgi) {
+	(my $value= $1)=~ s/\s+//g;
+	my ($i)= $value=~ /(?:^|;)i=(\d+)/ or next;
+	if ($i > $latest) {
+	    $latest= $i;
+	    ($cv)= $value=~ /(?:^|;)cv=([a-z]+)/i;
+	}
+    }
+    defined $cv ? lc $cv : undef
+}
+
 sub arc_seal {
     my ($mailbuf, $arc, $authserv_id)= @_;
+    my $cv= latest_seal_cv $mailbuf;
+    return (undef, "not sealed: the most recent ARC-Seal has cv=fail")
+	if defined $cv and $cv eq 'fail';
     require Mail::DKIM::ARC::Signer;
     my $signer= Mail::DKIM::ARC::Signer->new(
 	Algorithm => 'rsa-sha256',
@@ -89,6 +116,7 @@ sub arc_seal {
 	SrvId     => lc $authserv_id,
 	Selector  => $$arc{selector},
 	KeyFile   => $$arc{keyfile},
+	Headers   => 'DKIM-Signature',
     );
     for my $line (split /(?<=\n)/, $mailbuf) {
 	$line=~ s/\r?\n\z//;

@@ -139,7 +139,10 @@ needed are:
     result (cv=) is taken from an `arc=` result in our
     `Authentication-Results` header: without one, a message without
     ARC headers is sealed with cv=none, and one that already has ARC
-    headers isn't sealed. If sealing fails, the message is delivered
+    headers isn't sealed. A message whose most recent ARC-Seal already
+    says cv=fail isn't sealed either. Sealing comes after adding
+    hashcash and DKIM signatures, and the ARC-Message-Signature covers
+    the DKIM signatures. If sealing fails, the message is delivered
     unsealed.
 
     There is also a left-over from the old way how the original project
