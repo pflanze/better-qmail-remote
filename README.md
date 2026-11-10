@@ -108,6 +108,24 @@ needed are:
     * `$selector.algorithm.txt`: the key algorithm ('a' value in the
         signature), default: `rsa-sha256`
 
+    Messages are signed for the domain of their From header (the
+    domain DMARC checks), and only if that domain is one of ours:
+    listed in `/var/qmail/control/virtualdomains` (an entry
+    `.example.com` covers all subdomains of example.com, single
+    address entries don't count) or `/var/qmail/control/locals`.
+    Messages that came in from outside and are being sent on again
+    (forwards, mailing lists) are recognized by the
+    `Authentication-Results` header our smtpd added on receipt (its
+    authserv-id is taken from `/var/qmail/control/dkim/authserv-id.txt`
+    if present, else from `/var/qmail/control/me`). If their From
+    domain is ours, they are only signed if that header recorded a
+    DMARC pass for it, or a DMARC result for a different domain (the
+    From header was changed after receipt, like mailing list managers
+    do); otherwise they could be forgeries of our domains. This relies
+    on the smtpd renaming incoming `Authentication-Results` headers
+    that claim our authserv-id, as RFC 8601 requires.
+    `BETTER_QMAIL_REMOTE__CONTROLDIR` overrides `/var/qmail/control`.
+
     There is also a left-over from the old way how the original project
     better-qmail-remote is based on was configured, see the "XML config
     file structure" section.
