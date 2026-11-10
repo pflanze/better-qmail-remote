@@ -54,7 +54,9 @@ my $debug=0;
 use Mail::DKIM 0.29;
 use Mail::DKIM::Signer;
 use MySignerPolicy;
-use SigningDomain qw(read_hosted_domains dkim_signing_domain);
+use SigningDomain qw(read_hosted_domains dkim_signing_domain header_fields
+		     our_auth_results received_from_outside);
+use ArcSeal qw(read_arc_config arc_seal);
 use ConfigMerge qw(config_merge);
 use QmailExit ":all";
 use HashCash qw(have_hashcash mint_hashcash);
@@ -182,13 +184,16 @@ eval {
 
 # Create DKIM signature
 
+# the authserv-id of the Authentication-Results headers our smtpd adds
+my $authserv_id= maybe_first_line("$keydir/authserv-id.txt")
+  || xfirst_line("$controldir/me");
+
 # Only sign for the From domain, and only if we host it (see
 # lib/SigningDomain.pm); signing other domains' mail with our keys makes
 # it fail DKIM, and DMARC, at the receiving end.
 my ($dkim_domain, $dkim_reason)=
   dkim_signing_domain($mailbuf, read_hosted_domains($controldir),
-		      maybe_first_line("$keydir/authserv-id.txt")
-		      || xfirst_line("$controldir/me"));
+		      $authserv_id);
 Debug("DKIM signing domain: ", $dkim_domain // "none",
       " ($dkim_reason)");
 
@@ -238,6 +243,30 @@ if (defined $dkim_domain) {
 	1
     } || do {
 	qexit_deferral('Error while signing: ', $@)
+    };
+}
+
+# ----------------------------------------------------------------------
+
+# ARC seal mail that came in from outside and is being sent on again
+# (forwards, mailing lists), if a key is configured (see lib/ArcSeal.pm).
+# If sealing fails, the message is still delivered, just unsealed.
+
+my $arc_headers;
+if (received_from_outside(our_auth_results([header_fields $mailbuf],
+					    $authserv_id))) {
+    eval {
+	if (my $arc= read_arc_config("$controldir/arc")) {
+	    my $reason;
+	    ($arc_headers, $reason)= arc_seal($mailbuf, $arc, $authserv_id);
+	    Debug("ARC: $reason");
+	} else {
+	    Debug("ARC: no key configured");
+	}
+	1
+    } || do {
+	Debug("ARC sealing failed: $@");
+	$arc_headers= undef;
     };
 }
 
@@ -340,6 +369,11 @@ if (have_hashcash) { # XX add configuration option (instead)?
     }
 } else {
     Debug ("don't have hashcash");
+}
+
+for my $arc_header (@{$arc_headers || []}) {
+    print QR $arc_header."\012"
+	or qexit_deferral ('Printing to qmail-remote: ', $!);
 }
 
 for my $dkim_signature ($dkim ? $dkim->signatures : ()) {

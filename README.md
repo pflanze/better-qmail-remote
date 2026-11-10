@@ -126,6 +126,22 @@ needed are:
     that claim our authserv-id, as RFC 8601 requires.
     `BETTER_QMAIL_REMOTE__CONTROLDIR` overrides `/var/qmail/control`.
 
+* optionally, an ARC key, to ARC seal ([RFC
+    8617](https://www.rfc-editor.org/rfc/rfc8617)) messages that came
+    in from outside and are being sent on again (forwards, mailing
+    lists), so the receiver can see the authentication results our
+    smtpd got on receipt even when SPF, DKIM and DMARC fail after
+    forwarding. The key is the first `/var/qmail/control/arc/*.key`
+    file; its name without `.key` is the selector, and
+    `$selector.domain.txt` holds the signing domain (d=), which
+    identifies us as the sealer and doesn't need to match the From
+    domain. Only `rsa-sha256` is supported. The chain validation
+    result (cv=) is taken from an `arc=` result in our
+    `Authentication-Results` header: without one, a message without
+    ARC headers is sealed with cv=none, and one that already has ARC
+    headers isn't sealed. If sealing fails, the message is delivered
+    unsealed.
+
     There is also a left-over from the old way how the original project
     better-qmail-remote is based on was configured, see the "XML config
     file structure" section.

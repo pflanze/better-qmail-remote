@@ -54,7 +54,7 @@ package SigningDomain;
 @ISA="Exporter"; require Exporter;
 @EXPORT=qw();
 @EXPORT_OK=qw(read_hosted_domains header_fields from_domain our_auth_results
-	      dkim_signing_domain);
+	      received_from_outside dkim_signing_domain);
 %EXPORT_TAGS=(all=>[@EXPORT,@EXPORT_OK]);
 
 use strict; use warnings FATAL => 'uninitialized';
@@ -156,6 +156,14 @@ sub our_auth_results {
     undef
 }
 
+# Whether the message came in from outside: it has our header (added
+# by our smtpd on receipt), and that doesn't record auth=pass. Takes
+# the result of our_auth_results.
+sub received_from_outside {
+    my ($ar)= @_;
+    $ar and !grep { $$_{result} eq 'pass' } @{$$ar{auth} || []}
+}
+
 # Returns ($domain, $reason): the domain to sign for, or undef and why not.
 sub dkim_signing_domain {
     my ($mailbuf, $hosted, $authserv_id)= @_;
@@ -170,7 +178,7 @@ sub dkim_signing_domain {
     # no header of ours: locally generated
     return ($from, "locally generated") unless $ar;
     return ($from, "submitted with auth=pass")
-	if grep { $$_{result} eq 'pass' } @{$$ar{auth} || []};
+	unless received_from_outside $ar;
 
     # came in from outside
     my ($dmarc)= @{$$ar{dmarc} || []};
